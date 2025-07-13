@@ -1,7 +1,7 @@
 # Video Processing Tasks
 video_analysis_task:
   description: >
-    Analyze the video file {video_path} using Gemini's video understanding API:
+    Analyze the video file {video_path} using Gemini's video understanding API to create a short summary of the project demo:
     1. Enable audio transcription to capture all spoken content with timestamps
     2. Identify the project name and what it does
     3. Capture the most impressive or innovative aspects with specific timestamps
@@ -10,16 +10,70 @@ video_analysis_task:
     6. Identify key demo moments (consider using higher FPS for demo sections)
     7. Note visual elements like UI/UX, hardware, or live demonstrations
     
-    Focus on creating content suitable for Twitter/X engagement with rich media context.
+    Example posts:
+    <post>
+    1/ Bansky AI
+
+    Computer use agent that draws art on an HTML canvas. 
+
+    Self-taught AI artist
+    @Jandodev
+    </post>
+
+
+    <post>
+    2/ Touch Grass
+
+    Computer use agent that looks at the current time and location to recommend nature spots
+
+    3/ Real Estate Agent
+
+    Agent powered by OpenAI web search to find apartments for rent on the web
+
+    AI agents to replace human agents
+    @vacheishvilin
+    </post>
+
+    <post>
+    4/ Memory Agent
+
+    Connecting the Agents SDK with the AI Compass wearable to analyze memories, patterns, and struggles from daily life
+
+    AI second brain
+    @hackwithzach @fieldyai
+    </post>
+
+    <post>
+    5/ Agent Polling Simulator
+
+    Swarm of AI agents that lets you simulate different political personas and query how they respond to different policy choices and news articles
+
+    AI Sims for research
+    @SirvenJose
+    </post>
+
+    <post>
+    6/ Salary Seeker
+
+    Create specialized queries to scrape Glassdoor via RapidAPI using AI agents
+
+    (I rotated the keys don’t worry)
+    @AlexReibman
+    </post>
+
+    <post>
+    7/ Multi-Agent Brainstormer
+
+    Connecting brainstorming agents with evaluator agents to come up with cohesive strategies to achieve any goal
+    @dazzagreenwood
+    </post>
+
   expected_output: >
-    A structured summary containing:
-    - Project name and creators
-    - One-line description
-    - 3-5 key highlights with timestamps (MM:SS format)
-    - Most impressive technical achievement
-    - Suggested tweet text (280 characters max)
-    - Memorable quotes with timestamps
-    - Key visual moments for video clips
+    A structured summary:
+    - Project name
+    - One or two line description (or a pithy one-liner)
+    - One or two line explanation of the demo 
+    - Keep the total text length short (250 characters max)
     - Technical specs mentioned in the demo
   agent: video_summarizer
 
@@ -57,21 +111,19 @@ audio_enhancement_task:
 
 video_ranking_task:
   description: >
+    Given a full list of video summary posts, rank the processed video based on:
     Analyze and rank the processed video based on:
     1. Innovation and uniqueness of the project
     2. Quality of the presentation
     3. Technical impressiveness
     4. Potential for social media engagement
     5. Story-telling and narrative quality
-    
     Compare with other videos in {video_directory} if available.
   expected_output: >
     A ranking report with:
-    - Engagement score (1-10)
+    - Ordinal ranking of the video
     - Viral potential assessment
     - Key strengths and weaknesses
-    - Recommended posting priority
-    - Suggested posting time for maximum engagement
   agent: video_ranker
   context:
     - video_analysis_task
@@ -100,18 +152,20 @@ person_research_task:
 final_tweet_composition_task:
   description: >
     Compose the final tweet thread using all gathered information:
-    1. Create an engaging main tweet with the video
-    2. Add a thread with more details if needed
-    3. Include all relevant tags and mentions
-    4. Ensure captions are embedded in the video
-    5. Optimize for maximum engagement
+    1. Use the Typefully API to generate the draft of the X thread. Upload the corresponding videos for each post in the thread.
+    2. Generate a short 3 section title (250 characters max) of the thread title Example:
+    <title>
+    3,000+ top builders came to San Francisco for the Al Engineer World's Fair.
+
+    We invited the best to an exclusive 8pm - 1am hack night to see what they're capable of.
+
+    Here are the demos from the @aiDotEngineer Afterparty Hack Night with @AgentOpsAl (🧵):
+    </title>
+    3. Keep the title short, catchy, engaging, and pithy. Something that will get people to click and be curious.
   expected_output: >
     A complete tweet thread ready for posting:
-    - Main tweet text (with video)
-    - Follow-up tweets if needed
-    - All hashtags and mentions
-    - Best time to post
-    - Any additional social media recommendations
+    - Main tweet text
+    - Thread draft posted to Typefully
   agent: video_summarizer
   context:
     - video_analysis_task
