@@ -123,27 +123,26 @@ class HackReporterCrew():
         if not video_files:
             return {"error": f"No video files found in {directory}"}
 
-        # Process each video
-        results = []
-        for video_path in video_files:
-            print(f"\nProcessing video: {video_path}")
+        print(f"Found {len(video_files)} video files to process")
 
-            # Prepare inputs for the crew
-            inputs = {
-                'video_path': str(video_path),
-                'video_directory': directory,
-                'attendee_list': attendee_list or 'Not provided'
-            }
+        # Prepare inputs for the crew with all video paths
+        video_paths_str = '\n'.join([str(vf) for vf in video_files])
 
-            # Run the crew
-            crew_result = self.crew().kickoff(inputs=inputs)
+        inputs = {
+            'video_directory': directory,
+            'video_files': video_paths_str,
+            'all_video_paths': [str(vf) for vf in video_files],
+            'attendee_list': attendee_list or 'Not provided',
+            # For backward compatibility with single video path
+            'video_path': str(video_files[0]) if video_files else ''
+        }
 
-            results.append({
-                'video': str(video_path),
-                'result': crew_result
-            })
+        # Run the crew once with all videos
+        print(f"\nProcessing all {len(video_files)} videos together...")
+        crew_result = self.crew().kickoff(inputs=inputs)
 
         return {
-            'processed_videos': len(results),
-            'results': results
+            'processed_videos': len(video_files),
+            'video_files': [str(vf) for vf in video_files],
+            'result': crew_result
         }
