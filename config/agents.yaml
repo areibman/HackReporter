@@ -11,7 +11,7 @@ video_summarizer:
     and social media. You have a keen eye for identifying the most interesting
     and innovative aspects of hackathon projects. Your summaries have helped
     countless projects gain visibility on social media platforms.
-  llm: google/gemini-2.0-flash
+  llm: gpt-4o-mini
 
 video_captioner:
   role: >
@@ -24,7 +24,7 @@ video_captioner:
     technical documentation. You understand the importance of clear, accurate
     captions for making content accessible to all audiences. Your attention
     to detail ensures that every word is perfectly transcribed and synchronized.
-  llm: google/gemini-2.0-flash
+  llm: gpt-4o-mini
 
 video_noise_remover:
   role: >
@@ -38,7 +38,7 @@ video_noise_remover:
     environments can be for audio quality, and you excel at extracting
     clear speech from noisy backgrounds while preserving the authentic
     atmosphere of the event.
-  llm: google/gemini-2.0-flash
+  llm: gpt-4o-mini
 
 video_ranker:
   role: >
@@ -53,7 +53,7 @@ video_ranker:
     numerous tech events maximize their reach by identifying and promoting
     the most compelling content. Your rankings have consistently predicted
     which projects gain the most traction online.
-  llm: google/gemini-2.0-flash
+  llm: gpt-4o-mini
 
 person_finder:
   role: >
@@ -67,4 +67,4 @@ person_finder:
     people's online presence. You understand the importance of proper attribution
     and have developed effective techniques for matching event attendees with
     their social media profiles while respecting privacy and ensuring accuracy.
-  llm: google/gemini-2.0-flash 
+  llm: gpt-4o-mini
