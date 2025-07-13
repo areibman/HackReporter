@@ -14,25 +14,13 @@ HackReporter uses CrewAI to orchestrate multiple AI agents that work together to
   - Video analysis and content extraction
   - Final tweet composition
 
-### 2. Video Captioner
-- **Role**: Video Caption Specialist
-- **Goal**: Add accurate captions with proper spelling
-- **Tools**: Captions.ai API
-- **Tasks**: Caption generation with technical term accuracy
-
-### 3. Video Background Noise Remover
-- **Role**: Audio Enhancement Engineer
-- **Goal**: Clean up audio and remove background noise
-- **Tools**: Captions.ai API
-- **Tasks**: Audio enhancement and noise reduction
-
-### 4. Video Ranker
+### 2. Video Ranker
 - **Role**: Content Strategist and Engagement Analyst
 - **Goal**: Rank videos by audience interest potential
 - **Tools**: None (uses analysis from other agents)
 - **Tasks**: Video ranking based on engagement potential
 
-### 5. Person Finder
+### 3. Person Finder
 - **Role**: Social Media Research Specialist
 - **Goal**: Find attendee social media profiles
 - **Tools**: Twitter/X API
