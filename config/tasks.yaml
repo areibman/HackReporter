@@ -8,14 +8,19 @@ video_analysis_task:
     - video_filename: The name of the video file
     - attendee_list: List of attendees (if available)
     
+    CRITICAL: The video file is located at: {video_path}
+    This is the EXACT path you must pass to the Gemini Video Tool.
+    
     For this video:
     1. Use the Gemini Video Tool to analyze the video at {video_path}
-    2. Enable audio transcription to capture all spoken content with timestamps
+       - Pass the EXACT path: {video_path}
+       - Enable transcribe=True for audio transcription
+    2. If the tool returns an error, try again with just the path
     3. Identify the project name and what it does
-    4. Capture the most impressive or innovative aspects with specific timestamps
+    4. Capture the most impressive or innovative aspects
     5. Note any technical challenges overcome
-    6. Extract quotes or soundbites with exact timestamps
-    7. Identify key demo moments (consider using higher FPS for demo sections)
+    6. Extract quotes or soundbites
+    7. Identify key demo moments
     8. Note visual elements like UI/UX, hardware, or live demonstrations
     
     Create a summary following this EXACT format:
@@ -35,9 +40,12 @@ video_analysis_task:
     [One-line description of what the project does, ending with a period.]
     
     [Catchy tagline or category phrase]
-    [@twitter_handle]
+    [@twitter_handle or @unknown if not found]
     
-    Do NOT include any additional text or formatting.
+    IMPORTANT: Always produce this format even if some information is missing.
+    Use placeholders like "Unknown Project" or "@unknown" if needed.
+    Twitter handles may not always be available - that's OK! Use @unknown in those cases.
+    Do NOT include error messages or explanations in the output.
   agent: video_summarizer
 
 person_research_task:
@@ -47,18 +55,29 @@ person_research_task:
     Based on the project identified in the video_analysis_task:
     1. Use the attendee list {attendee_list} as reference if available
     2. Search for their Twitter/X profiles
-    3. Find their LinkedIn or other professional profiles
+    3. Find their LinkedIn or other professional profiles if possible
     4. Verify their association with the project
     5. Collect relevant handles and profile links
+    
+    IMPORTANT: If Twitter handles cannot be found, that's perfectly acceptable!
+    The search tool may not always find profiles, especially for:
+    - People with common names
+    - People without Twitter accounts
+    - People with private profiles
+    
+    In these cases, simply note that handles were not found and move on.
     
     Ensure all information is publicly available and accurate.
   expected_output: >
     A participant report for this project containing:
     - Project name
-    - Names of team members
-    - Twitter/X handles (verified)
-    - Other relevant social media links
-    - Brief bio or role in the project
+    - Names of team members (if identified)
+    - Twitter/X handles (if found - it's OK if none are found!)
+    - Other relevant social media links (if found)
+    - Brief bio or role in the project (if available)
+    
+    If no profiles are found, simply state:
+    "No social media profiles found for this project's team members"
   agent: person_finder
   context:
     - video_analysis_task
@@ -69,15 +88,18 @@ create_tweet_summary_task:
     
     Combine the information from:
     1. The video analysis with project details
-    2. The person research with verified Twitter handles
+    2. The person research with verified Twitter handles (if any were found)
+    
+    CRITICAL: If no Twitter handles were found in person_research_task, that's OK!
+    Simply use the original format from video_analysis_task.
     
     Format the output as a single tweet-ready summary that includes:
     - Project name
     - Description
     - Tagline
-    - Verified Twitter handles from person research (if found)
+    - Twitter handles if found, otherwise use @unknown or omit handles entirely
     
-    Keep the same format as the video analysis but update Twitter handles if better ones were found.
+    Keep the same format as the video analysis but update Twitter handles only if better ones were found.
   expected_output: >
     A single tweet-ready project summary in this format:
     
@@ -86,7 +108,9 @@ create_tweet_summary_task:
     [One-line description]
     
     [Tagline]
-    [@verified_handles]
+    [@verified_handles or @unknown if none found]
+    
+    Note: It's perfectly acceptable to use @unknown or omit handles if none were found!
   agent: video_summarizer
   context:
     - video_analysis_task
@@ -97,45 +121,62 @@ aggregate_summaries_task:
   description: >
     Collect and organize all individual video summaries that were processed.
     
-    You have access to:
-    - all_summaries: A collection of all individual project summaries
-    - video_count: The total number of videos processed
-    - summaries_file: Path to the JSON file containing all summaries
+    CRITICAL: You are receiving ACTUAL summaries from real video processing.
+    DO NOT create fake projects or example data.
+    
+    The summaries to process are:
+    {all_summaries}
+    
+    Total number of videos processed: {video_count}
     
     Your task is to:
-    1. Parse through all the individual summaries
-    2. Ensure each summary is properly formatted
-    3. Create a consolidated list of all projects
-    4. Prepare the data for ranking and final thread composition
+    1. Parse through the summaries provided above
+    2. Count exactly how many projects were included (should be {video_count})
+    3. Extract each project's details:
+       - Project Name (first line of each summary)
+       - One-line description (second line)
+       - Tagline (third line)
+       - Twitter handles (fourth line)
+    4. Present them in a clear, numbered list
+    5. DO NOT add any fake or example projects - use ONLY what's provided above
     
-    Each summary should follow the format:
-    - Project Name
-    - One-line description
-    - Tagline
-    - Twitter handles
+    Format each summary clearly:
+    Project #1:
+    - Name: [actual name from summary]
+    - Description: [actual description]
+    - Tagline: [actual tagline]
+    - Twitter: [actual handle]
   expected_output: >
-    A consolidated, well-organized list of ALL project summaries from the individual video processing.
-    Each project should be clearly separated and maintain the standard format.
-    Include a count of total projects processed.
+    A consolidated list of the ACTUAL project summaries from video processing.
+    Must include EXACTLY {video_count} project(s).
+    Each project should be clearly numbered and formatted.
+    NO fake or example projects - only use the real data provided above.
   agent: thread_composer
 
 video_ranking_task:
   description: >
-    Analyze and rank ALL the processed video summaries based on:
+    Analyze and rank the processed video summaries based on engagement potential.
+    
+    CRITICAL: Use ONLY the actual projects from the aggregate_summaries_task output.
+    DO NOT create fake projects. If only one project was processed, rank only that one project.
+    
+    The aggregate_summaries_task has provided you with the actual project details.
+    
+    Ranking criteria:
     1. Innovation and uniqueness of the project
     2. Quality of the presentation (based on the summaries)
     3. Technical impressiveness
     4. Potential for social media engagement
     5. Story-telling and narrative quality
     
-    You have access to all project summaries from the aggregate_summaries_task.
-    Rank ALL projects from most to least engaging for social media.
+    Rank the actual projects (not fictional ones) from most to least engaging for social media.
   expected_output: >
-    A comprehensive ranking report with:
-    - Ordered list of ALL projects from most to least engaging
-    - Viral potential assessment for each project
-    - Key strengths that make top projects stand out
-    - Recommendations for tweet thread ordering
+    A ranking report that includes:
+    - ONLY the actual projects from aggregate_summaries_task (no fake projects)
+    - If only 1 project exists, provide analysis for just that 1 project
+    - Viral potential assessment for each real project
+    - Key strengths that make projects stand out
+    - Clear ordering recommendation for the tweet thread
   agent: video_ranker
   context:
     - aggregate_summaries_task
@@ -144,48 +185,56 @@ final_tweet_composition_task:
   description: >
     Compose the final tweet thread using all gathered information:
     
-    CRITICAL: Use the aggregated summaries and rankings to create the final thread.
-    Include ALL projects that were processed.
+    CRITICAL REQUIREMENTS:
+    1. You MUST use ONLY the actual project summaries from the previous aggregate_summaries_task
+    2. DO NOT create fake or example projects
+    3. DO NOT hallucinate project names like "SaveThePlanet" or "CodeConnect"  
+    4. Use EXACTLY the projects from the aggregated summaries (provided by aggregate_summaries_task)
+    5. Follow the ranking order from video_ranking_task
     
-    1. Create a complete X/Twitter thread:
-       
+    The previous tasks have provided:
+    - Aggregated summaries with all project details (from aggregate_summaries_task)
+    - Ranking order for the projects (from video_ranking_task)
+    
+    If only ONE project was processed, create a thread with:
+    - The intro section (3 parts)
+    - ONE project tweet for that single project
+    
+    Thread format:
        FIRST: Start with a compelling 3-part introduction (NO NUMBERING):
        ```
-       [Event description line 1]
+       Join us as we unveil the groundbreaking projects from our latest hackathon! 🚀
        
-       [Event description line 2]
+       Innovation meets practical solutions in these exciting demonstrations.
        
-       [Thread introduction with (🧵):]
+       Discover the tools and ideas shaping tomorrow (🧵):
        
        
        
        
        ```
        
-       THEN: Add numbered tweets for EACH project based on the ranking:
+       THEN: Add numbered tweets for EACH project from the aggregated summaries:
        ```
-       1/ [Top-ranked Project Name]
+       1/ [Project Name from aggregated summaries]
        
-       [Description]
+       [Description from aggregated summaries]
        
-       [Tagline]
-       [Twitter handles]
-       
-       
+       [Tagline from aggregated summaries]
+       [Twitter handles from aggregated summaries]
        
        
-       2/ [Second-ranked Project Name]
        
-       [Description]
        
-       [Tagline]
-       [Handles]
+       2/ [Next project if exists]
+       ...
        ```
        
-    - Use the project summaries from aggregate_summaries_task
+    - Use the exact project details from aggregate_summaries_task
     - Order projects based on the video_ranking_task recommendations
-    - Include ALL projects that were processed
     - Each tweet MUST be separated by EXACTLY 4 blank lines
+    - Include ONLY the projects that were actually processed
+    - If Twitter handles show as @unknown, you may omit them or keep as @unknown
     
     2. Use the Typefully API tool (typefully_api) to create a draft:
        - Pass the entire thread content to the tool
@@ -195,7 +244,8 @@ final_tweet_composition_task:
     3. Save the thread content to the output file
   expected_output: >
     A complete tweet thread that includes:
-    - ALL projects from the aggregated summaries
+    - ONLY the actual projects from the context (no fake projects)
+    - The exact number of projects that were processed
     - Projects ordered based on the ranking recommendations
     - Proper formatting with 4 newlines between tweets
     - Confirmation that the draft was created in Typefully

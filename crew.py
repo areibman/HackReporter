@@ -4,6 +4,7 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
 from pathlib import Path
 import json
+import asyncio
 
 from tools import GeminiVideoTool, TwitterSearchTool, TypefullyTool
 
@@ -115,7 +116,7 @@ class HackReporterCrew():
         )
 
 
-def process_videos(directory: str, attendee_list: str | None = None) -> dict:
+async def process_videos(directory: str, attendee_list: str | None = None) -> dict:
     """
     Process all videos in a directory and generate social media content.
 
@@ -147,15 +148,22 @@ def process_videos(directory: str, attendee_list: str | None = None) -> dict:
     # Prepare inputs for each video
     video_inputs = []
     for video_file in video_files:
+        # Use absolute path to ensure agent can find the file
+        absolute_path = video_file.resolve()
+        print(f"\nDEBUG - Processing video: {video_file.name}")
+        print(f"  Absolute path: {absolute_path}")
+        print(f"  File exists: {absolute_path.exists()}")
+        print(f"  File size: {absolute_path.stat().st_size / (1024*1024):.1f}MB")
+
         video_inputs.append({
-            'video_path': str(video_file),
+            'video_path': str(absolute_path),
             'video_filename': video_file.name,
             'attendee_list': attendee_list or 'Not provided'
         })
 
     # Process videos individually using the individual_crew configuration
     print(f"\nProcessing {len(video_files)} videos individually...")
-    individual_results = crew_instance.individual_crew().kickoff_for_each(inputs=video_inputs)
+    individual_results = await crew_instance.individual_crew().kickoff_for_each_async(inputs=video_inputs)
 
     # Save individual results for aggregation
     output_dir = Path('output')
@@ -163,8 +171,19 @@ def process_videos(directory: str, attendee_list: str | None = None) -> dict:
 
     summaries = []
     for i, result in enumerate(individual_results):
+        print(f"\nDEBUG - Processing result {i+1}:")
+        print(f"  Result type: {type(result)}")
+        print(f"  Has 'raw' attribute: {hasattr(result, 'raw')}")
+
         # Extract the summary from the result
-        summary = result.raw if hasattr(result, 'raw') else str(result)
+        if hasattr(result, 'raw'):
+            summary = result.raw
+        else:
+            summary = str(result)
+
+        print(f"  Summary length: {len(summary)} chars")
+        print(f"  First 100 chars: {summary[:100]}...")
+
         summaries.append(summary)
 
         # Save individual summary
@@ -178,13 +197,26 @@ def process_videos(directory: str, attendee_list: str | None = None) -> dict:
     # Now run the aggregator crew configuration
     print(f"\nAggregating results and creating final tweet thread...")
 
+    # Debug: Show what summaries we're passing
+    print(f"\nDEBUG - Summaries being passed to aggregator:")
+    print(f"Number of summaries: {len(summaries)}")
+    for i, summary in enumerate(summaries):
+        print(f"\nSummary {i+1}:")
+        print(summary)
+        print("-" * 50)
+
     aggregation_inputs = {
         'all_summaries': '\n\n'.join(summaries),
         'video_count': len(video_files),
         'summaries_file': str(output_dir / 'all_summaries.json')
     }
 
-    final_result = crew_instance.aggregator_crew().kickoff(inputs=aggregation_inputs)
+    print(f"\nDEBUG - Aggregation inputs:")
+    print(f"- all_summaries length: {len(aggregation_inputs['all_summaries'])} chars")
+    print(f"- video_count: {aggregation_inputs['video_count']}")
+    print(f"- summaries_file: {aggregation_inputs['summaries_file']}")
+
+    final_result = await crew_instance.aggregator_crew().kickoff_async(inputs=aggregation_inputs)
 
     return {
         'processed_videos': len(video_files),
