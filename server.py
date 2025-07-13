@@ -1,9 +1,10 @@
 # server.py
 from fastmcp import FastMCP
-from crew import HackReporterCrew
+from crew import process_videos
 import agentops
 import os
 from dotenv import load_dotenv
+import weave
 
 # Load environment variables from .env file
 load_dotenv()
@@ -17,6 +18,7 @@ agentops.init(api_key=AGENTOPS_API_KEY,
               auto_start_session=False,
               tags=["hackathon", "video-processing"])
 
+weave.init('HackReporter')
 # Now import CrewAI after AgentOps is initialized
 
 
@@ -52,11 +54,8 @@ def kickoff_hackathon_reporter(directory: str, attendee_list: str | None = None)
     print("Starting hackathon reporter crew")
 
     try:
-        # Initialize the HackReporter crew
-        crew = HackReporterCrew()
-
-        # Process all videos in the directory
-        results = crew.process_videos(directory, attendee_list)
+        # Process all videos in the directory using the new process_videos function
+        results = process_videos(directory, attendee_list)
 
         # Format results for output
         if "error" in results:
