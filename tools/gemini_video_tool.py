@@ -2,7 +2,6 @@ from crewai.tools import BaseTool
 from typing import Type, Any, Optional, Dict
 from pydantic import BaseModel, Field
 from google import genai
-from google.genai import types
 import os
 import time
 from pathlib import Path
@@ -117,37 +116,29 @@ class GeminiVideoTool(BaseTool):
 
             # Wait for file to be processed
             print("Waiting for video to be processed...")
-            while video_file.state == "PROCESSING":
+
+            # Poll until the file is ready
+            for _ in range(30):  # Max 60 seconds wait
                 time.sleep(2)
-                video_file = client.files.get(name=video_file.name)
+                file_info = client.files.get(name=video_file.name)
+                if file_info.state.name == "ACTIVE":
+                    break
+                elif file_info.state.name == "FAILED":
+                    return f"Error: Video processing failed"
+                print(".", end="", flush=True)
+            else:
+                return "Error: Video processing timeout - file not ready after 60 seconds"
 
-            if video_file.state == "FAILED":
-                return f"Error: Video processing failed - {video_file.state}"
+            print("\nVideo processed successfully. Generating analysis...")
 
-            print("Video processed successfully. Generating analysis...")
-
-            # Create content with uploaded file
-            contents = [
-                types.Part.from_uri(
-                    file_uri=video_file.uri,
-                    mime_type=self._get_mime_type(video_path)
-                ),
-                types.Part.from_text(text=analysis_prompt)
-            ]
-
-            # Generate analysis
+            # Generate analysis using the processed file
             response = client.models.generate_content(
-                model='gemini-2.0-flash-001',
-                contents=contents,
-                config=types.GenerateContentConfig()
+                model="gemini-2.0-flash",
+                contents=[file_info, analysis_prompt]
             )
 
-            # Clean up uploaded file
-            print("Cleaning up uploaded file...")
-            client.files.delete(name=video_file.name)
-
             # Format the response
-            result = str(response.text)
+            result = response.text
 
             # Add metadata about the analysis
             result += f"\n\n--- Video Analysis Metadata ---\n"
