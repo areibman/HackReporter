@@ -1,0 +1,45 @@
+{
+  "name": "HackReporter",
+  "instructions": null,
+  "fastmcp_version": "2.10.5",
+  "mcp_version": "1.11.0",
+  "server_version": "2.10.5",
+  "tools": [
+    {
+      "key": "hello",
+      "name": "hello",
+      "description": null,
+      "input_schema": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "annotations": null,
+      "tags": null,
+      "enabled": true
+    }
+  ],
+  "prompts": [],
+  "resources": [],
+  "templates": [],
+  "capabilities": {
+    "tools": {
+      "listChanged": true
+    },
+    "resources": {
+      "subscribe": false,
+      "listChanged": false
+    },
+    "prompts": {
+      "listChanged": false
+    },
+    "logging": {}
+  }
+}

@@ -1,0 +1,119 @@
+# Video Processing Tasks
+video_analysis_task:
+  description: >
+    Analyze the video file {video_path} using Gemini's video understanding API:
+    1. Enable audio transcription to capture all spoken content with timestamps
+    2. Identify the project name and what it does
+    3. Capture the most impressive or innovative aspects with specific timestamps
+    4. Note any technical challenges overcome
+    5. Extract quotes or soundbites with exact timestamps
+    6. Identify key demo moments (consider using higher FPS for demo sections)
+    7. Note visual elements like UI/UX, hardware, or live demonstrations
+    
+    Focus on creating content suitable for Twitter/X engagement with rich media context.
+  expected_output: >
+    A structured summary containing:
+    - Project name and creators
+    - One-line description
+    - 3-5 key highlights with timestamps (MM:SS format)
+    - Most impressive technical achievement
+    - Suggested tweet text (280 characters max)
+    - Memorable quotes with timestamps
+    - Key visual moments for video clips
+    - Technical specs mentioned in the demo
+  agent: video_summarizer
+
+caption_generation_task:
+  description: >
+    Generate accurate captions for the video {video_path}:
+    1. Create time-coded subtitles for all spoken content
+    2. Ensure technical terms are spelled correctly
+    3. Include speaker identification where possible
+    4. Add descriptive captions for important visual elements
+    5. Proofread for grammar and spelling errors
+  expected_output: >
+    A caption file (SRT format) with:
+    - Properly timed subtitles
+    - Speaker labels
+    - Correct technical terminology
+    - Description of key visual moments
+  agent: video_captioner
+
+audio_enhancement_task:
+  description: >
+    Process the audio track of video {video_path}:
+    1. Identify and reduce background noise
+    2. Enhance speech clarity
+    3. Normalize audio levels
+    4. Remove echo or reverb where possible
+    5. Preserve important ambient sounds
+  expected_output: >
+    An audio processing report containing:
+    - Noise reduction settings applied
+    - Audio quality improvements made
+    - Any sections that couldn't be enhanced
+    - Recommendations for the final video
+  agent: video_noise_remover
+
+video_ranking_task:
+  description: >
+    Analyze and rank the processed video based on:
+    1. Innovation and uniqueness of the project
+    2. Quality of the presentation
+    3. Technical impressiveness
+    4. Potential for social media engagement
+    5. Story-telling and narrative quality
+    
+    Compare with other videos in {video_directory} if available.
+  expected_output: >
+    A ranking report with:
+    - Engagement score (1-10)
+    - Viral potential assessment
+    - Key strengths and weaknesses
+    - Recommended posting priority
+    - Suggested posting time for maximum engagement
+  agent: video_ranker
+  context:
+    - video_analysis_task
+
+person_research_task:
+  description: >
+    Research the project participants from the video:
+    1. Use the attendee list {attendee_list} as reference
+    2. Search for their Twitter/X profiles
+    3. Find their LinkedIn or other professional profiles
+    4. Verify their association with the project
+    5. Collect relevant handles and profile links
+    
+    Ensure all information is publicly available and accurate.
+  expected_output: >
+    A participant report containing:
+    - Names of team members
+    - Twitter/X handles (verified)
+    - Other relevant social media links
+    - Brief bio or role in the project
+    - Suggested tags for the tweet
+  agent: person_finder
+  context:
+    - video_analysis_task
+
+final_tweet_composition_task:
+  description: >
+    Compose the final tweet thread using all gathered information:
+    1. Create an engaging main tweet with the video
+    2. Add a thread with more details if needed
+    3. Include all relevant tags and mentions
+    4. Ensure captions are embedded in the video
+    5. Optimize for maximum engagement
+  expected_output: >
+    A complete tweet thread ready for posting:
+    - Main tweet text (with video)
+    - Follow-up tweets if needed
+    - All hashtags and mentions
+    - Best time to post
+    - Any additional social media recommendations
+  agent: video_summarizer
+  context:
+    - video_analysis_task
+    - person_research_task
+    - video_ranking_task 

@@ -3,7 +3,14 @@ name = "hackreporter"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "fastmcp>=2.10.5",
+    "crewai>=0.98.0",
+    "crewai-tools>=0.17.0",
+    "python-dotenv>=1.0.0",
+    "google-genai>=1.0.0",
+    "tweepy>=4.14.0",
+    "langchain-google-genai>=2.0.0",
+    "agentops>=0.4.17",
 ]
