@@ -1,14 +1,15 @@
-# Video Processing Tasks
+# Individual Video Processing Tasks (kickoff_for_each)
 video_analysis_task:
   description: >
-    Analyze ALL video files in the provided list using Gemini's video understanding API to create short summaries of each project demo.
+    Analyze a SINGLE video file using Gemini's video understanding API to create a short summary of the project demo.
     
     You have been provided with:
-    - video_files: A list of all video paths to process
-    - all_video_paths: An array of video file paths
+    - video_path: The path to a single video file to process
+    - video_filename: The name of the video file
+    - attendee_list: List of attendees (if available)
     
-    For EACH video file in the list:
-    1. Use the Gemini Video Tool to analyze the video
+    For this video:
+    1. Use the Gemini Video Tool to analyze the video at {video_path}
     2. Enable audio transcription to capture all spoken content with timestamps
     3. Identify the project name and what it does
     4. Capture the most impressive or innovative aspects with specific timestamps
@@ -17,83 +18,17 @@ video_analysis_task:
     7. Identify key demo moments (consider using higher FPS for demo sections)
     8. Note visual elements like UI/UX, hardware, or live demonstrations
     
-    IMPORTANT: You MUST process ALL videos in the list, not just the first one!
+    Create a summary following this EXACT format:
     
-    The video paths are provided in:
-    - {video_files} - a list of all video paths separated by newlines
-    - {all_video_paths} - an array of video file paths
-    
-    Use the Gemini Video Tool (gemini_video_analyzer) for EACH video path.
-    Process them one by one and collect all summaries.
-    
-    CRITICAL STEPS:
-    1. Parse the {video_files} string by splitting on newlines
-    2. For EACH video path in the list:
-       - Call gemini_video_analyzer with that specific video_path
-       - Add the summary to your collection
-    3. Continue until ALL videos have been analyzed
-    
-    DO NOT STOP after analyzing the first video!
-    If there are 2 videos, you must make 2 calls to gemini_video_analyzer.
-    If there are 5 videos, you must make 5 calls to gemini_video_analyzer.
-    
-    Create summaries following this EXACT format for EACH project:
-    
-    <example>
     Project Name
     
     One-line description of what it does.
     
     Catchy tagline or category
     @twitter_handle
-    </example>
-    
-    Here are properly formatted examples:
-    
-    <example>
-    Bansky AI
-
-    Computer use agent that draws art on an HTML canvas. 
-
-    Self-taught AI artist
-    @Jandodev
-    </example>
-    
-    <example>
-    Touch Grass
-
-    Computer use agent that looks at the current time and location to recommend nature spots.
-    
-    AI wellness companion
-    @touchgrassdev
-    </example>
-    
-    <example>
-    Real Estate Agent
-
-    Agent powered by OpenAI web search to find apartments for rent on the web.
-
-    AI agents to replace human agents
-    @vacheishvilin
-    </example>
-    
-    <example>
-    Memory Agent
-
-    Connecting the Agents SDK with the AI Compass wearable to analyze memories, patterns, and struggles from daily life.
-
-    AI second brain
-    @hackwithzach @fieldyai
-    </example>
 
   expected_output: >
-    A comprehensive collection of ALL video summaries. You MUST have analyzed each video file
-    in the list using the Gemini Video Tool. Do NOT invent projects.
-    
-    Your output should contain EXACTLY as many project summaries as there are video files.
-    If there are 2 videos, provide 2 summaries. If there are 5 videos, provide 5 summaries.
-    
-    Each project summary MUST be in EXACTLY this format:
+    A single project summary in the EXACT format specified:
     
     [Project Name]
     
@@ -102,37 +37,15 @@ video_analysis_task:
     [Catchy tagline or category phrase]
     [@twitter_handle]
     
-    Each project should be separated by blank lines.
+    Do NOT include any additional text or formatting.
   agent: video_summarizer
-  output_file: output/video_summaries.txt
-
-video_ranking_task:
-  description: >
-    Analyze and rank ALL the processed videos based on:
-    1. Innovation and uniqueness of the project
-    2. Quality of the presentation
-    3. Technical impressiveness
-    4. Potential for social media engagement
-    5. Story-telling and narrative quality
-    
-    You have access to all video summaries from the video_analysis_task.
-    Rank ALL projects from most to least engaging for social media.
-  expected_output: >
-    A comprehensive ranking report with:
-    - Ordered list of ALL projects from most to least engaging
-    - Viral potential assessment for each project
-    - Key strengths and weaknesses of each
-    - Recommendations for tweet thread ordering
-  agent: video_ranker
-  context:
-    - video_analysis_task
 
 person_research_task:
   description: >
-    Research the project participants from ALL the analyzed videos:
+    Research the project participants from the analyzed video:
     
-    For EACH project identified in the video_analysis_task:
-    1. Use the attendee list {attendee_list} as reference
+    Based on the project identified in the video_analysis_task:
+    1. Use the attendee list {attendee_list} as reference if available
     2. Search for their Twitter/X profiles
     3. Find their LinkedIn or other professional profiles
     4. Verify their association with the project
@@ -140,36 +53,99 @@ person_research_task:
     
     Ensure all information is publicly available and accurate.
   expected_output: >
-    A comprehensive participant report for ALL projects containing:
+    A participant report for this project containing:
     - Project name
-    - Names of team members for that project
+    - Names of team members
     - Twitter/X handles (verified)
     - Other relevant social media links
     - Brief bio or role in the project
-    - Suggested tags for each project's tweet
   agent: person_finder
   context:
     - video_analysis_task
+
+create_tweet_summary_task:
+  description: >
+    Create a final tweet-ready summary for this individual project.
+    
+    Combine the information from:
+    1. The video analysis with project details
+    2. The person research with verified Twitter handles
+    
+    Format the output as a single tweet-ready summary that includes:
+    - Project name
+    - Description
+    - Tagline
+    - Verified Twitter handles from person research (if found)
+    
+    Keep the same format as the video analysis but update Twitter handles if better ones were found.
+  expected_output: >
+    A single tweet-ready project summary in this format:
+    
+    [Project Name]
+    
+    [One-line description]
+    
+    [Tagline]
+    [@verified_handles]
+  agent: video_summarizer
+  context:
+    - video_analysis_task
+    - person_research_task
+
+# Aggregation Tasks (single kickoff)
+aggregate_summaries_task:
+  description: >
+    Collect and organize all individual video summaries that were processed.
+    
+    You have access to:
+    - all_summaries: A collection of all individual project summaries
+    - video_count: The total number of videos processed
+    - summaries_file: Path to the JSON file containing all summaries
+    
+    Your task is to:
+    1. Parse through all the individual summaries
+    2. Ensure each summary is properly formatted
+    3. Create a consolidated list of all projects
+    4. Prepare the data for ranking and final thread composition
+    
+    Each summary should follow the format:
+    - Project Name
+    - One-line description
+    - Tagline
+    - Twitter handles
+  expected_output: >
+    A consolidated, well-organized list of ALL project summaries from the individual video processing.
+    Each project should be clearly separated and maintain the standard format.
+    Include a count of total projects processed.
+  agent: thread_composer
+
+video_ranking_task:
+  description: >
+    Analyze and rank ALL the processed video summaries based on:
+    1. Innovation and uniqueness of the project
+    2. Quality of the presentation (based on the summaries)
+    3. Technical impressiveness
+    4. Potential for social media engagement
+    5. Story-telling and narrative quality
+    
+    You have access to all project summaries from the aggregate_summaries_task.
+    Rank ALL projects from most to least engaging for social media.
+  expected_output: >
+    A comprehensive ranking report with:
+    - Ordered list of ALL projects from most to least engaging
+    - Viral potential assessment for each project
+    - Key strengths that make top projects stand out
+    - Recommendations for tweet thread ordering
+  agent: video_ranker
+  context:
+    - aggregate_summaries_task
 
 final_tweet_composition_task:
   description: >
     Compose the final tweet thread using all gathered information:
     
-    CRITICAL: You MUST use ONLY the projects from the video_analysis_task context.
-    DO NOT invent or hallucinate any projects. The video_analysis_task has already analyzed
-    all videos and provided project summaries. Use those EXACT summaries.
-    
-    You will find the project summaries in the context from video_analysis_task.
-    The summaries are also saved in output/video_summaries.txt.
-    
-    Each project follows this format:
-    - Project Name
-    - One-line description
-    - Catchy tagline
-    - Twitter handle
-    
-    Count the number of projects in the video analysis output and make sure your
-    thread includes EXACTLY that many projects.
+    CRITICAL: Use the aggregated summaries and rankings to create the final thread.
+    Include ALL projects that were processed.
     
     1. Create a complete X/Twitter thread:
        
@@ -186,82 +162,45 @@ final_tweet_composition_task:
        
        ```
        
-       THEN: Add numbered tweets for EACH project from the video analysis:
+       THEN: Add numbered tweets for EACH project based on the ranking:
        ```
-       1/ [Project Name from video analysis]
+       1/ [Top-ranked Project Name]
        
-       [Description from video analysis]
+       [Description]
        
-       [Tagline from video analysis]
-       [Twitter handles from person research]
-       
-       
+       [Tagline]
+       [Twitter handles]
        
        
-       2/ [Next Project Name]
+       
+       
+       2/ [Second-ranked Project Name]
        
        [Description]
        
        [Tagline]
        [Handles]
-        ```
-        
-        - Use the EXACT project summaries from video_analysis_task (don't rewrite them!)
-        - Include ALL projects that were analyzed, not just some of them
-        - Just add the tweet number (1/, 2/, etc.) before each project name
-        - If person_research_task found better Twitter handles, use those
-        - DO NOT combine multiple numbered tweets together
-     
-     CRITICAL FORMATTING REQUIREMENTS:
-    - Each tweet MUST be separated by EXACTLY 4 blank lines (press Enter 4 times)
-    - This is MANDATORY for Typefully to properly split the thread
-    - DO NOT PUT MULTIPLE NUMBERED TWEETS IN THE SAME SECTION
-    - Each tweet number (1/, 2/, 3/, etc.) MUST start its own section
+       ```
+       
+    - Use the project summaries from aggregate_summaries_task
+    - Order projects based on the video_ranking_task recommendations
+    - Include ALL projects that were processed
+    - Each tweet MUST be separated by EXACTLY 4 blank lines
     
-    CORRECT FORMAT (notice the 4 empty lines between tweets):
-    ```
-    1/ Project Name
-    
-    Description of what it does.
-    
-    Tagline
-    @handle
-    
-    
-    
-    
-    2/ Another Project
-    
-    Description here.
-    
-    Category
-    @creator
-    ```
-    
-    WRONG FORMAT (DO NOT DO THIS):
-    ```
-    1/ First project
-    2/ Second project  <- WRONG! These need 4 blank lines between them
-    3/ Third project   <- WRONG! Each number needs its own section
-    ```
-    
-    2. Use the Typefully API tool (typefully_api) to create a draft of the complete thread:
+    2. Use the Typefully API tool (typefully_api) to create a draft:
        - Pass the entire thread content to the tool
        - Set threadify=true to handle thread splitting
        - Set share=true to get a shareable link
-    3. Save the thread content to the output file AND create the Typefully draft
     
-    The thread should be engaging, informative, and ready to post with proper formatting.
+    3. Save the thread content to the output file
   expected_output: >
     A complete tweet thread that includes:
-    - ONLY the projects that were analyzed in the video_analysis_task (no invented projects)
-    - The exact project summaries from the video analysis context
-    - The full thread content saved to file with proper formatting (4 newlines between tweets)
-    - Each tweet on a separate line with its number (1/, 2/, etc.)
-    - Confirmation that the draft was created in Typefully (if available)
-    - Status message confirming successful creation
-  agent: video_summarizer
+    - ALL projects from the aggregated summaries
+    - Projects ordered based on the ranking recommendations
+    - Proper formatting with 4 newlines between tweets
+    - Confirmation that the draft was created in Typefully
+    - The shareable link from Typefully
+  agent: thread_composer
   context:
-    - video_analysis_task
-    - person_research_task
+    - aggregate_summaries_task
     - video_ranking_task 
