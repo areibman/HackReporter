@@ -13,4 +13,5 @@ dependencies = [
     "agentops>=0.4.17",
     "crewai>=0.141.0",
     "crewai-tools>=0.51.1",
+    "exa-py>=1.14.16",
 ]
