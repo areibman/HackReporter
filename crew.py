@@ -4,7 +4,7 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
 from pathlib import Path
 
-from tools import GeminiVideoTool, CaptionsTool, TwitterSearchTool
+from tools import GeminiVideoTool, CaptionsTool, TwitterSearchTool, TypefullyTool
 
 
 @CrewBase
@@ -18,7 +18,7 @@ class HackReporterCrew():
     def video_summarizer(self) -> Agent:
         return Agent(
             config=self.agents_config['video_summarizer'],  # type: ignore[index]
-            tools=[GeminiVideoTool()],
+            tools=[GeminiVideoTool(), TypefullyTool()],
             verbose=True
         )
 
