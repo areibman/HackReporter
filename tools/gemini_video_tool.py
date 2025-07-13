@@ -147,7 +147,7 @@ class GeminiVideoTool(BaseTool):
             client.files.delete(name=video_file.name)
 
             # Format the response
-            result = response.text
+            result = str(response.text)
 
             # Add metadata about the analysis
             result += f"\n\n--- Video Analysis Metadata ---\n"
