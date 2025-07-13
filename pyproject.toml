@@ -14,4 +14,5 @@ dependencies = [
     "crewai>=0.141.0",
     "crewai-tools>=0.51.1",
     "exa-py>=1.14.16",
+    "weave>=0.51.56",
 ]
