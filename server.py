@@ -66,12 +66,12 @@ def kickoff_hackathon_reporter(directory: str, attendee_list: str | None = None)
 
         output = f"Successfully processed {results['processed_videos']} videos!\n\n"
 
-        for video_result in results['results']:
-            output += f"Video: {video_result['video']}\n"
-            output += f"Result: {video_result['result']}\n"
-            output += "-" * 50 + "\n\n"
+        output += "Videos processed:\n"
+        for video_file in results['video_files']:
+            output += f"  - {video_file}\n"
 
-        output += f"Tweet threads have been saved to the output/ directory."
+        output += f"\nResult:\n{results['result']}\n\n"
+        output += f"Tweet thread has been saved to the output/ directory."
 
         # End trace with success state
         agentops.end_trace(tracer, end_state="Success")
