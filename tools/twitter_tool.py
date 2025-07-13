@@ -67,12 +67,13 @@ class TwitterSearchTool(BaseTool):
                 if additional_context:
                     prompt = (
                         f"Based on this context: {additional_context}, "
-                        "identify any relevant Twitter/X handles for people, companies, or technologies mentioned. "
+                        "identify any relevant Twitter/X handles for people, companies, or technologies mentioned. Provide their @'s (handles) but ensure it is for their twitter/x account."
                         "Focus on tech-related accounts."
                     )
 
                     completion = client.chat.completions.create(
-                        model="exa-research-pro",
+                        # model="exa-research-pro",
+                        model="exa-research",
                         messages=[{"role": "user", "content": prompt}],
                         stream=False
                     )

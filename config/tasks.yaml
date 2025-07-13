@@ -1,14 +1,41 @@
 # Video Processing Tasks
 video_analysis_task:
   description: >
-    Analyze the video file {video_path} using Gemini's video understanding API to create a short summary of the project demo:
-    1. Enable audio transcription to capture all spoken content with timestamps
-    2. Identify the project name and what it does
-    3. Capture the most impressive or innovative aspects with specific timestamps
-    4. Note any technical challenges overcome
-    5. Extract quotes or soundbites with exact timestamps
-    6. Identify key demo moments (consider using higher FPS for demo sections)
-    7. Note visual elements like UI/UX, hardware, or live demonstrations
+    Analyze ALL video files in the provided list using Gemini's video understanding API to create short summaries of each project demo.
+    
+    You have been provided with:
+    - video_files: A list of all video paths to process
+    - all_video_paths: An array of video file paths
+    
+    For EACH video file in the list:
+    1. Use the Gemini Video Tool to analyze the video
+    2. Enable audio transcription to capture all spoken content with timestamps
+    3. Identify the project name and what it does
+    4. Capture the most impressive or innovative aspects with specific timestamps
+    5. Note any technical challenges overcome
+    6. Extract quotes or soundbites with exact timestamps
+    7. Identify key demo moments (consider using higher FPS for demo sections)
+    8. Note visual elements like UI/UX, hardware, or live demonstrations
+    
+    IMPORTANT: You MUST process ALL videos in the list, not just the first one!
+    
+    The video paths are provided in:
+    - {video_files} - a list of all video paths separated by newlines
+    - {all_video_paths} - an array of video file paths
+    
+    Use the Gemini Video Tool (gemini_video_analyzer) for EACH video path.
+    Process them one by one and collect all summaries.
+    
+    CRITICAL STEPS:
+    1. Parse the {video_files} string by splitting on newlines
+    2. For EACH video path in the list:
+       - Call gemini_video_analyzer with that specific video_path
+       - Add the summary to your collection
+    3. Continue until ALL videos have been analyzed
+    
+    DO NOT STOP after analyzing the first video!
+    If there are 2 videos, you must make 2 calls to gemini_video_analyzer.
+    If there are 5 videos, you must make 5 calls to gemini_video_analyzer.
     
     Create summaries following this EXACT format for EACH project:
     
@@ -60,7 +87,13 @@ video_analysis_task:
     </example>
 
   expected_output: >
-    A structured summary EXACTLY in this format (no numbers, no extra text):
+    A comprehensive collection of ALL video summaries. You MUST have analyzed each video file
+    in the list using the Gemini Video Tool. Do NOT invent projects.
+    
+    Your output should contain EXACTLY as many project summaries as there are video files.
+    If there are 2 videos, provide 2 summaries. If there are 5 videos, provide 5 summaries.
+    
+    Each project summary MUST be in EXACTLY this format:
     
     [Project Name]
     
@@ -69,69 +102,36 @@ video_analysis_task:
     [Catchy tagline or category phrase]
     [@twitter_handle]
     
-    Example output:
-    Jaiku
-    
-    Natural language to JQ query DSL agent transforming how users interact with JSON data.
-    
-    AI data whisperer
-    @jaikudev
+    Each project should be separated by blank lines.
   agent: video_summarizer
-
-caption_generation_task:
-  description: >
-    Generate accurate captions for the video {video_path}:
-    1. Create time-coded subtitles for all spoken content
-    2. Ensure technical terms are spelled correctly
-    3. Include speaker identification where possible
-    4. Add descriptive captions for important visual elements
-    5. Proofread for grammar and spelling errors
-  expected_output: >
-    A caption file (SRT format) with:
-    - Properly timed subtitles
-    - Speaker labels
-    - Correct technical terminology
-    - Description of key visual moments
-  agent: video_captioner
-
-audio_enhancement_task:
-  description: >
-    Process the audio track of video {video_path}:
-    1. Identify and reduce background noise
-    2. Enhance speech clarity
-    3. Normalize audio levels
-    4. Remove echo or reverb where possible
-    5. Preserve important ambient sounds
-  expected_output: >
-    An audio processing report containing:
-    - Noise reduction settings applied
-    - Audio quality improvements made
-    - Any sections that couldn't be enhanced
-    - Recommendations for the final video
-  agent: video_noise_remover
+  output_file: output/video_summaries.txt
 
 video_ranking_task:
   description: >
-    Given a full list of video summary posts, rank the processed video based on:
-    Analyze and rank the processed video based on:
+    Analyze and rank ALL the processed videos based on:
     1. Innovation and uniqueness of the project
     2. Quality of the presentation
     3. Technical impressiveness
     4. Potential for social media engagement
     5. Story-telling and narrative quality
-    Compare with other videos in {video_directory} if available.
+    
+    You have access to all video summaries from the video_analysis_task.
+    Rank ALL projects from most to least engaging for social media.
   expected_output: >
-    A ranking report with:
-    - Ordinal ranking of the video
-    - Viral potential assessment
-    - Key strengths and weaknesses
+    A comprehensive ranking report with:
+    - Ordered list of ALL projects from most to least engaging
+    - Viral potential assessment for each project
+    - Key strengths and weaknesses of each
+    - Recommendations for tweet thread ordering
   agent: video_ranker
   context:
     - video_analysis_task
 
 person_research_task:
   description: >
-    Research the project participants from the video:
+    Research the project participants from ALL the analyzed videos:
+    
+    For EACH project identified in the video_analysis_task:
     1. Use the attendee list {attendee_list} as reference
     2. Search for their Twitter/X profiles
     3. Find their LinkedIn or other professional profiles
@@ -140,12 +140,13 @@ person_research_task:
     
     Ensure all information is publicly available and accurate.
   expected_output: >
-    A participant report containing:
-    - Names of team members
+    A comprehensive participant report for ALL projects containing:
+    - Project name
+    - Names of team members for that project
     - Twitter/X handles (verified)
     - Other relevant social media links
     - Brief bio or role in the project
-    - Suggested tags for the tweet
+    - Suggested tags for each project's tweet
   agent: person_finder
   context:
     - video_analysis_task
@@ -153,6 +154,23 @@ person_research_task:
 final_tweet_composition_task:
   description: >
     Compose the final tweet thread using all gathered information:
+    
+    CRITICAL: You MUST use ONLY the projects from the video_analysis_task context.
+    DO NOT invent or hallucinate any projects. The video_analysis_task has already analyzed
+    all videos and provided project summaries. Use those EXACT summaries.
+    
+    You will find the project summaries in the context from video_analysis_task.
+    The summaries are also saved in output/video_summaries.txt.
+    
+    Each project follows this format:
+    - Project Name
+    - One-line description
+    - Catchy tagline
+    - Twitter handle
+    
+    Count the number of projects in the video analysis output and make sure your
+    thread includes EXACTLY that many projects.
+    
     1. Create a complete X/Twitter thread:
        
        FIRST: Start with a compelling 3-part introduction (NO NUMBERING):
@@ -168,7 +186,7 @@ final_tweet_composition_task:
        
        ```
        
-       THEN: Add numbered tweets for each project:
+       THEN: Add numbered tweets for EACH project from the video analysis:
        ```
        1/ [Project Name from video analysis]
        
@@ -189,6 +207,7 @@ final_tweet_composition_task:
         ```
         
         - Use the EXACT project summaries from video_analysis_task (don't rewrite them!)
+        - Include ALL projects that were analyzed, not just some of them
         - Just add the tweet number (1/, 2/, etc.) before each project name
         - If person_research_task found better Twitter handles, use those
         - DO NOT combine multiple numbered tweets together
@@ -235,10 +254,11 @@ final_tweet_composition_task:
     The thread should be engaging, informative, and ready to post with proper formatting.
   expected_output: >
     A complete tweet thread that includes:
+    - ONLY the projects that were analyzed in the video_analysis_task (no invented projects)
+    - The exact project summaries from the video analysis context
     - The full thread content saved to file with proper formatting (4 newlines between tweets)
     - Each tweet on a separate line with its number (1/, 2/, etc.)
-    - Confirmation that the draft was created in Typefully
-    - The Typefully draft ID and shareable link (if available)
+    - Confirmation that the draft was created in Typefully (if available)
     - Status message confirming successful creation
   agent: video_summarizer
   context:
