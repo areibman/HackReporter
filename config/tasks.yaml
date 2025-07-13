@@ -10,71 +10,72 @@ video_analysis_task:
     6. Identify key demo moments (consider using higher FPS for demo sections)
     7. Note visual elements like UI/UX, hardware, or live demonstrations
     
-    Example posts:
-    <post>
-    1/ Bansky AI
+    Create summaries following this EXACT format for EACH project:
+    
+    <example>
+    Project Name
+    
+    One-line description of what it does.
+    
+    Catchy tagline or category
+    @twitter_handle
+    </example>
+    
+    Here are properly formatted examples:
+    
+    <example>
+    Bansky AI
 
     Computer use agent that draws art on an HTML canvas. 
 
     Self-taught AI artist
     @Jandodev
-    </post>
+    </example>
+    
+    <example>
+    Touch Grass
 
+    Computer use agent that looks at the current time and location to recommend nature spots.
+    
+    AI wellness companion
+    @touchgrassdev
+    </example>
+    
+    <example>
+    Real Estate Agent
 
-    <post>
-    2/ Touch Grass
-
-    Computer use agent that looks at the current time and location to recommend nature spots
-
-    3/ Real Estate Agent
-
-    Agent powered by OpenAI web search to find apartments for rent on the web
+    Agent powered by OpenAI web search to find apartments for rent on the web.
 
     AI agents to replace human agents
     @vacheishvilin
-    </post>
+    </example>
+    
+    <example>
+    Memory Agent
 
-    <post>
-    4/ Memory Agent
-
-    Connecting the Agents SDK with the AI Compass wearable to analyze memories, patterns, and struggles from daily life
+    Connecting the Agents SDK with the AI Compass wearable to analyze memories, patterns, and struggles from daily life.
 
     AI second brain
     @hackwithzach @fieldyai
-    </post>
-
-    <post>
-    5/ Agent Polling Simulator
-
-    Swarm of AI agents that lets you simulate different political personas and query how they respond to different policy choices and news articles
-
-    AI Sims for research
-    @SirvenJose
-    </post>
-
-    <post>
-    6/ Salary Seeker
-
-    Create specialized queries to scrape Glassdoor via RapidAPI using AI agents
-
-    (I rotated the keys don’t worry)
-    @AlexReibman
-    </post>
-
-    <post>
-    7/ Multi-Agent Brainstormer
-
-    Connecting brainstorming agents with evaluator agents to come up with cohesive strategies to achieve any goal
-    @dazzagreenwood
-    </post>
+    </example>
 
   expected_output: >
-    A structured summary:
-    - Project name
-    - One or two line description (or a pithy one-liner)
-    - One or two line explanation of the demo 
-    - Keep the total text length short (250 characters max)
-    - Technical specs mentioned in the demo
+    A structured summary EXACTLY in this format (no numbers, no extra text):
+    
+    [Project Name]
+    
+    [One-line description of what the project does, ending with a period.]
+    
+    [Catchy tagline or category phrase]
+    [@twitter_handle]
+    
+    Example output:
+    Jaiku
+    
+    Natural language to JQ query DSL agent transforming how users interact with JSON data.
+    
+    AI data whisperer
+    @jaikudev
   agent: video_summarizer
 
 caption_generation_task:
@@ -152,30 +153,78 @@ person_research_task:
 final_tweet_composition_task:
   description: >
     Compose the final tweet thread using all gathered information:
-    1. Create a complete X/Twitter thread with:
-       - A compelling 3-section title (250 characters max) following this format:
-         <title>
-         3,000+ top builders came to San Francisco for the Al Engineer World's Fair.
-
-         We invited the best to an exclusive 8pm - 1am hack night to see what they're capable of.
-
-         Here are the demos from the @aiDotEngineer Afterparty Hack Night with @AgentOpsAl (🧵):
-         </title>
-       - Individual tweets for each project demo from the video analysis
-       - Proper Twitter handles from the person research
-       - Thread numbering (1/, 2/, etc.)
-    
-    CRITICAL FORMATTING REQUIREMENTS:
+    1. Create a complete X/Twitter thread:
+       
+       FIRST: Start with a compelling 3-part introduction (NO NUMBERING):
+       ```
+       [Event description line 1]
+       
+       [Event description line 2]
+       
+       [Thread introduction with (🧵):]
+       
+       
+       
+       
+       ```
+       
+       THEN: Add numbered tweets for each project:
+       ```
+       1/ [Project Name from video analysis]
+       
+       [Description from video analysis]
+       
+       [Tagline from video analysis]
+       [Twitter handles from person research]
+       
+       
+       
+       
+       2/ [Next Project Name]
+       
+       [Description]
+       
+       [Tagline]
+       [Handles]
+        ```
+        
+        - Use the EXACT project summaries from video_analysis_task (don't rewrite them!)
+        - Just add the tweet number (1/, 2/, etc.) before each project name
+        - If person_research_task found better Twitter handles, use those
+        - DO NOT combine multiple numbered tweets together
+     
+     CRITICAL FORMATTING REQUIREMENTS:
     - Each tweet MUST be separated by EXACTLY 4 blank lines (press Enter 4 times)
-    - This is required for Typefully to properly split the thread
-    - Example format:
-      1/ First tweet content here
-
-
-      2/ Second tweet content here
-
-
-      3/ Third tweet content here
+    - This is MANDATORY for Typefully to properly split the thread
+    - DO NOT PUT MULTIPLE NUMBERED TWEETS IN THE SAME SECTION
+    - Each tweet number (1/, 2/, 3/, etc.) MUST start its own section
+    
+    CORRECT FORMAT (notice the 4 empty lines between tweets):
+    ```
+    1/ Project Name
+    
+    Description of what it does.
+    
+    Tagline
+    @handle
+    
+    
+    
+    
+    2/ Another Project
+    
+    Description here.
+    
+    Category
+    @creator
+    ```
+    
+    WRONG FORMAT (DO NOT DO THIS):
+    ```
+    1/ First project
+    2/ Second project  <- WRONG! These need 4 blank lines between them
+    3/ Third project   <- WRONG! Each number needs its own section
+    ```
     
     2. Use the Typefully API tool (typefully_api) to create a draft of the complete thread:
        - Pass the entire thread content to the tool
