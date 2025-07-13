@@ -152,20 +152,45 @@ person_research_task:
 final_tweet_composition_task:
   description: >
     Compose the final tweet thread using all gathered information:
-    1. Use the Typefully API to generate the draft of the X thread. Upload the corresponding videos for each post in the thread.
-    2. Generate a short 3 section title (250 characters max) of the thread title Example:
-    <title>
-    3,000+ top builders came to San Francisco for the Al Engineer World's Fair.
+    1. Create a complete X/Twitter thread with:
+       - A compelling 3-section title (250 characters max) following this format:
+         <title>
+         3,000+ top builders came to San Francisco for the Al Engineer World's Fair.
 
-    We invited the best to an exclusive 8pm - 1am hack night to see what they're capable of.
+         We invited the best to an exclusive 8pm - 1am hack night to see what they're capable of.
 
-    Here are the demos from the @aiDotEngineer Afterparty Hack Night with @AgentOpsAl (🧵):
-    </title>
-    3. Keep the title short, catchy, engaging, and pithy. Something that will get people to click and be curious.
+         Here are the demos from the @aiDotEngineer Afterparty Hack Night with @AgentOpsAl (🧵):
+         </title>
+       - Individual tweets for each project demo from the video analysis
+       - Proper Twitter handles from the person research
+       - Thread numbering (1/, 2/, etc.)
+    
+    CRITICAL FORMATTING REQUIREMENTS:
+    - Each tweet MUST be separated by EXACTLY 4 blank lines (press Enter 4 times)
+    - This is required for Typefully to properly split the thread
+    - Example format:
+      1/ First tweet content here
+
+
+      2/ Second tweet content here
+
+
+      3/ Third tweet content here
+    
+    2. Use the Typefully API tool (typefully_api) to create a draft of the complete thread:
+       - Pass the entire thread content to the tool
+       - Set threadify=true to handle thread splitting
+       - Set share=true to get a shareable link
+    3. Save the thread content to the output file AND create the Typefully draft
+    
+    The thread should be engaging, informative, and ready to post with proper formatting.
   expected_output: >
-    A complete tweet thread ready for posting:
-    - Main tweet text
-    - Thread draft posted to Typefully
+    A complete tweet thread that includes:
+    - The full thread content saved to file with proper formatting (4 newlines between tweets)
+    - Each tweet on a separate line with its number (1/, 2/, etc.)
+    - Confirmation that the draft was created in Typefully
+    - The Typefully draft ID and shareable link (if available)
+    - Status message confirming successful creation
   agent: video_summarizer
   context:
     - video_analysis_task

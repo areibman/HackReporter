@@ -6,6 +6,7 @@ agentops
 
 # Environment and utilities
 python-dotenv>=1.0.0
+requests>=2.31.0
 
 # AI/ML APIs
 google-genai>=1.0.0
