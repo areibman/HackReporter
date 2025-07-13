@@ -4,7 +4,7 @@ from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
 from pathlib import Path
 
-from tools import GeminiVideoTool, CaptionsTool, TwitterSearchTool, TypefullyTool
+from tools import GeminiVideoTool, TwitterSearchTool, TypefullyTool
 
 
 @CrewBase
@@ -19,22 +19,6 @@ class HackReporterCrew():
         return Agent(
             config=self.agents_config['video_summarizer'],  # type: ignore[index]
             tools=[GeminiVideoTool(), TypefullyTool()],
-            verbose=True
-        )
-
-    @agent
-    def video_captioner(self) -> Agent:
-        return Agent(
-            config=self.agents_config['video_captioner'],  # type: ignore[index]
-            tools=[CaptionsTool()],
-            verbose=True
-        )
-
-    @agent
-    def video_noise_remover(self) -> Agent:
-        return Agent(
-            config=self.agents_config['video_noise_remover'],  # type: ignore[index]
-            tools=[CaptionsTool()],
             verbose=True
         )
 
@@ -57,18 +41,6 @@ class HackReporterCrew():
     def video_analysis_task(self) -> Task:
         return Task(
             config=self.tasks_config['video_analysis_task']  # type: ignore[index]
-        )
-
-    @task
-    def caption_generation_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['caption_generation_task']  # type: ignore[index]
-        )
-
-    @task
-    def audio_enhancement_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['audio_enhancement_task']  # type: ignore[index]
         )
 
     @task
