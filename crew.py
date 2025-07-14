@@ -91,11 +91,11 @@ class HackReporterCrew():
     def individual_crew(self) -> Crew:
         """Creates the crew for individual video processing"""
         return Crew(
-            agents=[self.video_summarizer(), self.person_finder()],
+            agents=[self.video_summarizer()],  # Removed person_finder
             tasks=[
-                self.video_analysis_task(),
-                self.person_research_task(),
-                self.create_tweet_summary_task()
+                self.video_analysis_task()
+                # Removed person_research_task
+                # Removed create_tweet_summary_task - video_analysis_task already outputs tweet format
             ],
             process=Process.sequential,
             verbose=True,
