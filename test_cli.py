@@ -95,11 +95,11 @@ def main():
         import signal
 
         def timeout_handler(signum, frame):
-            raise TimeoutError("Crew execution timed out after 5 minutes")
+            raise TimeoutError("Crew execution timed out after 1 hour")
 
-        # Set a 5-minute timeout
+        # Set a 15-minute timeout
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(300)  # 5 minutes
+        signal.alarm(3600)  # 1 hour
 
         try:
             results = asyncio.run(process_videos(

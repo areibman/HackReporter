@@ -5,13 +5,13 @@ video_summarizer:
   goal: >
     Extract key moments and insights from a single hackathon video and create
     a concise, tweet-style summary that captures the essence of the project
-    demonstration
+    demonstration. If the API fails, try again!
   backstory: >
     You are an expert content curator with years of experience in tech journalism
     and social media. You have a keen eye for identifying the most interesting
     and innovative aspects of hackathon projects. Your summaries have helped
     countless projects gain visibility on social media platforms.
-  llm: gpt-4o
+  llm: o3-mini
 
 person_finder:
   role: >
@@ -28,7 +28,7 @@ person_finder:
     You also understand that not everyone has discoverable social media profiles,
     and you're comfortable reporting when profiles cannot be found. You know that
     it's better to report "not found" than to guess or provide incorrect information.
-  llm: gpt-4o
+  llm: o3-mini
 
 # Aggregation Crew Agents
 thread_composer:
@@ -51,7 +51,7 @@ thread_composer:
     serious breach of trust. You're also experienced in handling cases where
     Twitter handles are not available (@unknown) and know how to gracefully
     present projects even without social media attribution.
-  llm: gpt-4o
+  llm: o3-mini
 
 video_ranker:
   role: >
@@ -66,4 +66,4 @@ video_ranker:
     numerous tech events maximize their reach by identifying and promoting
     the most compelling content. Your rankings have consistently predicted
     which projects gain the most traction online.
-  llm: gpt-4o
+  llm: o3-mini
