@@ -7,6 +7,9 @@ import json
 import asyncio
 
 from tools import GeminiVideoTool, TwitterSearchTool, TypefullyTool
+from crewai_tools import StagehandTool
+import os
+from stagehand.schemas import AvailableModel
 
 
 @CrewBase
@@ -29,7 +32,15 @@ class HackReporterCrew():
     def person_finder(self) -> Agent:
         return Agent(
             config=self.agents_config['person_finder'],  # type: ignore[index]
-            tools=[TwitterSearchTool()],
+            tools=[
+                StagehandTool(
+                    api_key=os.environ["BROWSERBASE_API_KEY"],
+                    project_id=os.environ["BROWSERBASE_PROJECT_ID"],
+                    model_api_key=os.environ["OPENAI_API_KEY"],
+                    model_name=AvailableModel.GPT_4O,
+                ),
+                # TwitterSearchTool()
+            ],
             verbose=True
         )
 
@@ -62,6 +73,12 @@ class HackReporterCrew():
         )
 
     @task
+    def team_research_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['team_research_task']  # type: ignore[index]
+        )
+
+    @task
     def create_tweet_summary_task(self) -> Task:
         return Task(
             config=self.tasks_config['create_tweet_summary_task']  # type: ignore[index]
@@ -91,11 +108,12 @@ class HackReporterCrew():
     def individual_crew(self) -> Crew:
         """Creates the crew for individual video processing"""
         return Crew(
-            agents=[self.video_summarizer()],  # Removed person_finder
+            agents=[self.video_summarizer(),
+                    # self.person_finder() # Removed person finder for now
+                    ],
             tasks=[
-                self.video_analysis_task()
-                # Removed person_research_task
-                # Removed create_tweet_summary_task - video_analysis_task already outputs tweet format
+                self.video_analysis_task(),
+                # self.team_research_task()  # Removed team_research_task for now
             ],
             process=Process.sequential,
             verbose=True,
@@ -127,6 +145,9 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
     Returns:
         Dictionary with processing results
     """
+    # Check for sequential processing mode (useful when hitting API quotas)
+    SEQUENTIAL_MODE = os.getenv("SEQUENTIAL_VIDEO_PROCESSING", "false").lower() == "true"
+
     # Find all video files in directory
     video_extensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm']
     video_dir = Path(directory)
@@ -161,9 +182,67 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
             'attendee_list': attendee_list or 'Not provided'
         })
 
-    # Process videos individually using the individual_crew configuration
+        # Process videos individually using the individual_crew configuration
     print(f"\nProcessing {len(video_files)} videos individually...")
-    individual_results = await crew_instance.individual_crew().kickoff_for_each_async(inputs=video_inputs)
+
+    # Create individual async tasks for each video - TRUE PARALLEL PROCESSING
+    # Use a semaphore to limit concurrent processing (adjust based on your system)
+    MAX_CONCURRENT_VIDEOS = 2  # Reduced from 5 to avoid API quota issues
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_VIDEOS)
+
+    # Check if we should process sequentially to avoid quota issues
+    if SEQUENTIAL_MODE:
+        print("🔄 Running in SEQUENTIAL mode to avoid API quota issues")
+        individual_results = []
+        for i, video_input in enumerate(video_inputs):
+            print(f"\n📹 Processing video {i+1}/{len(video_inputs)}: {video_input['video_filename']}")
+            try:
+                crew_instance_for_video = HackReporterCrew()
+                result = await crew_instance_for_video.individual_crew().kickoff_async(inputs=video_input)
+                individual_results.append(result)
+                print(f"✅ Completed video {i+1}")
+
+                # Add a delay between videos to respect API rate limits
+                if i < len(video_inputs) - 1:  # Don't delay after the last video
+                    delay = 3  # seconds
+                    print(f"⏳ Waiting {delay}s before next video...")
+                    await asyncio.sleep(delay)
+            except Exception as e:
+                print(f"❌ ERROR processing video {i+1}: {str(e)}")
+                individual_results.append(f"Error processing {video_input['video_filename']}: {str(e)}")
+    else:
+        # Original parallel processing code
+        print(f"⚡ Running in PARALLEL mode with max {MAX_CONCURRENT_VIDEOS} concurrent videos")
+        print(f"⚠️  Note: Processing with max {MAX_CONCURRENT_VIDEOS} concurrent videos to respect API quotas")
+
+        async def process_video_with_limit(video_input, index):
+            async with semaphore:
+                print(f"Starting processing for video {index+1}: {video_input['video_filename']}")
+                try:
+                    # Create a new crew instance for each video to ensure parallel execution
+                    crew_instance_for_video = HackReporterCrew()
+                    result = await crew_instance_for_video.individual_crew().kickoff_async(inputs=video_input)
+                    print(f"Completed processing for video {index+1}: {video_input['video_filename']}")
+                    return result
+                except Exception as e:
+                    print(f"ERROR processing video {index+1} ({video_input['video_filename']}): {str(e)}")
+                    # Return a placeholder result so other videos continue processing
+                    return f"Error processing {video_input['video_filename']}: {str(e)}"
+
+    # Create tasks with semaphore control
+    async_tasks = []
+    for i, video_input in enumerate(video_inputs):
+        task = process_video_with_limit(video_input, i)
+        async_tasks.append(task)
+
+    # Execute all tasks in parallel using asyncio.gather
+    print(f"\nExecuting {len(async_tasks)} video processing tasks in parallel (max {MAX_CONCURRENT_VIDEOS} concurrent)...")
+    individual_results = await asyncio.gather(*async_tasks, return_exceptions=True)
+
+    # Count successful results
+    successful_count = sum(1 for r in individual_results if not isinstance(
+        r, Exception) and not str(r).startswith("Error"))
+    print(f"\nProcessed {successful_count}/{len(individual_results)} videos successfully!")
 
     # Save individual results for aggregation
     output_dir = Path('output')
@@ -173,16 +252,30 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
     for i, result in enumerate(individual_results):
         print(f"\nDEBUG - Processing result {i+1}:")
         print(f"  Result type: {type(result)}")
-        print(f"  Has 'raw' attribute: {hasattr(result, 'raw')}")
 
-        # Extract the summary from the result
-        if hasattr(result, 'raw'):
-            summary = result.raw
+        summary = ""  # Initialize summary
+
+        # Check if this is an error or exception
+        if isinstance(result, Exception):
+            print(f"  ERROR: Exception occurred - {str(result)}")
+            summary = f"Error processing video: {str(result)}"
+        elif isinstance(result, str) and result.startswith("Error"):
+            print(f"  ERROR: {result}")
+            summary = result
         else:
-            summary = str(result)
-
-        print(f"  Summary length: {len(summary)} chars")
-        print(f"  First 100 chars: {summary[:100]}...")
+            # At this point, result is a valid crew output object
+            print(f"  Has 'raw' attribute: {hasattr(result, 'raw')}")
+            # Extract the summary from the result
+            try:
+                if hasattr(result, 'raw'):
+                    summary = getattr(result, 'raw', str(result))
+                else:
+                    summary = str(result)
+                print(f"  Summary length: {len(summary)} chars")
+                print(f"  First 100 chars: {summary[:100]}...")
+            except Exception as e:
+                print(f"  ERROR extracting summary: {str(e)}")
+                summary = f"Error extracting summary: {str(e)}"
 
         summaries.append(summary)
 

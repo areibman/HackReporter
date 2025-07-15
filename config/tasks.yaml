@@ -15,37 +15,39 @@ video_analysis_task:
     1. Use the Gemini Video Tool to analyze the video at {video_path}
        - Pass the EXACT path: {video_path}
        - Enable transcribe=True for audio transcription
-    2. If the tool returns an error, try again with just the path
-    3. Identify the project name and what it does
-    4. Capture the most impressive or innovative aspects
-    5. Note any technical challenges overcome
-    6. Extract quotes or soundbites
-    7. Identify key demo moments
-    8. Note visual elements like UI/UX, hardware, or live demonstrations
+    2. Extract from the tool output:
+       - Project Name (look for "Project Name:" in the response)
+       - Description (look for what the project does)
+       - Any impressive features or innovations
+    3. Format the extracted information into the required output format
+
+    If the API returns an error, try again!
+    
+    IMPORTANT: Always use the actual project information from the tool output.
+    If the tool provides a project name like "PaperTrail" or "CrewAI", use that exact name.
+    DO NOT use "Unknown Project" if the tool successfully extracted a project name.
     
     Create a summary following this EXACT format:
     
-    Project Name
+    [Actual Project Name from tool output]
     
-    One-line description of what it does.
+    [One-line description of what it does]
     
-    Catchy tagline or category
-    @twitter_handle
+    [Catchy tagline or category]
+    [@unknown]
 
   expected_output: >
     A single project summary in the EXACT format specified:
     
-    [Project Name]
+    [Project Name from Gemini tool output]
     
     [One-line description of what the project does, ending with a period.]
     
     [Catchy tagline or category phrase]
-    [@twitter_handle or @unknown if not found]
+    [@unknown]
     
-    IMPORTANT: Always produce this format even if some information is missing.
-    Use placeholders like "Unknown Project" or "@unknown" if needed.
-    Twitter handles may not always be available - that's OK! Use @unknown in those cases.
-    Do NOT include error messages or explanations in the output.
+    CRITICAL: Use the ACTUAL project information from the Gemini tool output.
+    Do NOT use generic placeholders like "Unknown Project" if the tool provided real information.
   agent: video_summarizer
 
 person_research_task:
@@ -84,22 +86,20 @@ person_research_task:
 
 create_tweet_summary_task:
   description: >
-    Create a final tweet-ready summary for this individual project.
+    Format the video analysis results into a tweet-ready summary.
     
-    Combine the information from:
-    1. The video analysis with project details
-    2. The person research with verified Twitter handles (if any were found)
+    DO NOT analyze any videos - the video_analysis_task has already done this.
+    Simply take the output from video_analysis_task and ensure it follows
+    the correct tweet format.
     
-    CRITICAL: If no Twitter handles were found in person_research_task, that's OK!
-    Simply use the original format from video_analysis_task.
-    
-    Format the output as a single tweet-ready summary that includes:
+    The video_analysis_task output should already contain:
     - Project name
-    - Description
+    - One-line description
     - Tagline
-    - Twitter handles if found, otherwise use @unknown or omit handles entirely
+    - Twitter handle (use @unknown)
     
-    Keep the same format as the video analysis but update Twitter handles only if better ones were found.
+    Your job is ONLY to verify the format and pass it through.
+    DO NOT use any tools. DO NOT analyze videos.
   expected_output: >
     A single tweet-ready project summary in this format:
     
@@ -108,13 +108,10 @@ create_tweet_summary_task:
     [One-line description]
     
     [Tagline]
-    [@verified_handles or @unknown if none found]
-    
-    Note: It's perfectly acceptable to use @unknown or omit handles if none were found!
+    [@unknown]
   agent: video_summarizer
   context:
     - video_analysis_task
-    - person_research_task
 
 # Aggregation Tasks (single kickoff)
 aggregate_summaries_task:
@@ -181,6 +178,19 @@ video_ranking_task:
   context:
     - aggregate_summaries_task
 
+team_research_task:
+  description: >
+    Based on the analyzed video, go to https://weavehacks-1.devpost.com/project-gallery and find the names of the people who were part of the team in the video:
+    
+    Based on the project identified in the video_analysis_task:
+    1. Report all social media profile links or handles of the people who were part of the team.
+    2. Find their X or Twitter handles if possible
+  expected_output: >
+    A list of names and social media handles of the people who were part of the team.
+  agent: person_finder
+  context:
+    - video_analysis_task
+
 final_tweet_composition_task:
   description: >
     Compose the final tweet thread using all gathered information:
@@ -234,7 +244,7 @@ final_tweet_composition_task:
     - Order projects based on the video_ranking_task recommendations
     - Each tweet MUST be separated by EXACTLY 4 blank lines
     - Include ONLY the projects that were actually processed
-    - If Twitter handles show as @unknown, you may omit them or keep as @unknown
+    - If Twitter handles show as @unknown, you should omit them
     
     2. Use the Typefully API tool (typefully_api) to create a draft:
        - Pass the entire thread content to the tool
