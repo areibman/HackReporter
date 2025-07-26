@@ -180,13 +180,38 @@ video_ranking_task:
 
 team_research_task:
   description: >
-    Based on the analyzed video, go to https://weavehacks-1.devpost.com/project-gallery and find the names of the people who were part of the team in the video:
+    Based on the analyzed video, find the team members and their social media profiles.
     
-    Based on the project identified in the video_analysis_task:
-    1. Report all social media profile links or handles of the people who were part of the team.
-    2. Find their X or Twitter handles if possible
+    You have been provided with:
+    - project_gallery_url: {project_gallery_url}
+    - The project details from video_analysis_task
+    
+    If a project gallery URL is provided (not 'Not provided'):
+    1. Use the Stagehand tool to navigate to the URL
+    2. Find the project that matches the one identified in video_analysis_task
+    3. Click on the project to view its details page
+    4. Extract team member names and any profile links
+    5. For each team member:
+       - Look for Twitter/X handles on the project page
+       - If no Twitter handle, check if they have a personal website link
+       - If personal website exists, visit it to look for Twitter/X links
+    
+    If no URL is provided or the project cannot be found:
+    - Simply note that no team information could be found
+    
+    IMPORTANT: Only visit URLs that are clearly linked from the project page.
+    Do not make assumptions about social media handles.
   expected_output: >
-    A list of names and social media handles of the people who were part of the team.
+    A team member report containing:
+    - Project name (from video_analysis_task)
+    - List of team members with:
+      - Name
+      - Twitter/X handle (if found)
+      - Personal website (if found)
+      - Role in project (if specified)
+    
+    If no team information is found, state:
+    "No team information available for [Project Name]"
   agent: person_finder
   context:
     - video_analysis_task
@@ -245,6 +270,7 @@ final_tweet_composition_task:
     - Each tweet MUST be separated by EXACTLY 4 blank lines
     - Include ONLY the projects that were actually processed
     - If Twitter handles show as @unknown, you should omit them
+    - If team member Twitter handles were found, include them in the project tweet
     
     2. Use the Typefully API tool (typefully_api) to create a draft:
        - Pass the entire thread content to the tool
