@@ -35,6 +35,9 @@ def main():
     parser.add_argument('--list', '-l',
                         action='store_true',
                         help='List videos in directory without processing')
+    parser.add_argument('--url', '-u',
+                        help='URL of hackathon project gallery (e.g., devpost) to scrape for team information',
+                        default=None)
 
     args = parser.parse_args()
 
@@ -104,7 +107,8 @@ def main():
         try:
             results = asyncio.run(process_videos(
                 directory=str(video_dir),
-                attendee_list=args.attendees
+                attendee_list=args.attendees,
+                project_gallery_url=args.url
             ))
         finally:
             # Cancel the alarm
