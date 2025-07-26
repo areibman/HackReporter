@@ -109,11 +109,11 @@ class HackReporterCrew():
         """Creates the crew for individual video processing"""
         return Crew(
             agents=[self.video_summarizer(),
-                    # self.person_finder() # Removed person finder for now
+                    self.person_finder()  # Re-enabled for team research
                     ],
             tasks=[
                 self.video_analysis_task(),
-                # self.team_research_task()  # Removed team_research_task for now
+                self.team_research_task()  # Re-enabled for team research
             ],
             process=Process.sequential,
             verbose=True,
@@ -134,13 +134,14 @@ class HackReporterCrew():
         )
 
 
-async def process_videos(directory: str, attendee_list: str | None = None) -> dict:
+async def process_videos(directory: str, attendee_list: str | None = None, project_gallery_url: str | None = None) -> dict:
     """
     Process all videos in a directory and generate social media content.
 
     Args:
         directory: Path to directory containing video files
         attendee_list: Path to attendee list file (optional)
+        project_gallery_url: URL of hackathon project gallery to scrape (optional)
 
     Returns:
         Dictionary with processing results
@@ -165,7 +166,6 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
     # Create the crew instance
     crew_instance = HackReporterCrew()
 
-    # First, process each video individually using kickoff_for_each
     # Prepare inputs for each video
     video_inputs = []
     for video_file in video_files:
@@ -179,16 +179,12 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
         video_inputs.append({
             'video_path': str(absolute_path),
             'video_filename': video_file.name,
-            'attendee_list': attendee_list or 'Not provided'
+            'attendee_list': attendee_list or 'Not provided',
+            'project_gallery_url': project_gallery_url or 'Not provided'
         })
 
-        # Process videos individually using the individual_crew configuration
-    print(f"\nProcessing {len(video_files)} videos individually...")
-
-    # Create individual async tasks for each video - TRUE PARALLEL PROCESSING
-    # Use a semaphore to limit concurrent processing (adjust based on your system)
-    MAX_CONCURRENT_VIDEOS = 2  # Reduced from 5 to avoid API quota issues
-    semaphore = asyncio.Semaphore(MAX_CONCURRENT_VIDEOS)
+    # Process videos using CrewAI's built-in parallel processing
+    print(f"\nProcessing {len(video_files)} videos in parallel using CrewAI's kickoff_for_each_async...")
 
     # Check if we should process sequentially to avoid quota issues
     if SEQUENTIAL_MODE:
@@ -197,8 +193,7 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
         for i, video_input in enumerate(video_inputs):
             print(f"\n📹 Processing video {i+1}/{len(video_inputs)}: {video_input['video_filename']}")
             try:
-                crew_instance_for_video = HackReporterCrew()
-                result = await crew_instance_for_video.individual_crew().kickoff_async(inputs=video_input)
+                result = await crew_instance.individual_crew().kickoff_async(inputs=video_input)
                 individual_results.append(result)
                 print(f"✅ Completed video {i+1}")
 
@@ -211,33 +206,23 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
                 print(f"❌ ERROR processing video {i+1}: {str(e)}")
                 individual_results.append(f"Error processing {video_input['video_filename']}: {str(e)}")
     else:
-        # Original parallel processing code
-        print(f"⚡ Running in PARALLEL mode with max {MAX_CONCURRENT_VIDEOS} concurrent videos")
-        print(f"⚠️  Note: Processing with max {MAX_CONCURRENT_VIDEOS} concurrent videos to respect API quotas")
-
-        async def process_video_with_limit(video_input, index):
-            async with semaphore:
-                print(f"Starting processing for video {index+1}: {video_input['video_filename']}")
+        # Use CrewAI's built-in parallel processing for multiple inputs
+        print(f"⚡ Running in PARALLEL mode using CrewAI's kickoff_for_each_async")
+        try:
+            # kickoff_for_each_async processes all inputs concurrently
+            individual_results = await crew_instance.individual_crew().kickoff_for_each_async(inputs=video_inputs)
+            print(f"✅ Completed processing all {len(video_files)} videos in parallel")
+        except Exception as e:
+            print(f"❌ ERROR in parallel processing: {str(e)}")
+            # Fallback to sequential processing if parallel fails
+            print("Falling back to sequential processing...")
+            individual_results = []
+            for i, video_input in enumerate(video_inputs):
                 try:
-                    # Create a new crew instance for each video to ensure parallel execution
-                    crew_instance_for_video = HackReporterCrew()
-                    result = await crew_instance_for_video.individual_crew().kickoff_async(inputs=video_input)
-                    print(f"Completed processing for video {index+1}: {video_input['video_filename']}")
-                    return result
+                    result = await crew_instance.individual_crew().kickoff_async(inputs=video_input)
+                    individual_results.append(result)
                 except Exception as e:
-                    print(f"ERROR processing video {index+1} ({video_input['video_filename']}): {str(e)}")
-                    # Return a placeholder result so other videos continue processing
-                    return f"Error processing {video_input['video_filename']}: {str(e)}"
-
-    # Create tasks with semaphore control
-    async_tasks = []
-    for i, video_input in enumerate(video_inputs):
-        task = process_video_with_limit(video_input, i)
-        async_tasks.append(task)
-
-    # Execute all tasks in parallel using asyncio.gather
-    print(f"\nExecuting {len(async_tasks)} video processing tasks in parallel (max {MAX_CONCURRENT_VIDEOS} concurrent)...")
-    individual_results = await asyncio.gather(*async_tasks, return_exceptions=True)
+                    individual_results.append(f"Error processing {video_input['video_filename']}: {str(e)}")
 
     # Count successful results
     successful_count = sum(1 for r in individual_results if not isinstance(
