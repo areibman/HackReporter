@@ -9,7 +9,6 @@ from crew import process_videos
 import os
 from dotenv import load_dotenv
 import agentops
-import weave
 import asyncio
 
 # Load environment variables
@@ -28,7 +27,7 @@ def main():
     parser.add_argument('directory',
                         help='Directory containing video files to process',
                         nargs='?',
-                        default='/Users/reibs/Projects/HackReporter/short_tests')
+                        default='/Users/reibs/Projects/HackReporter/short_tests_optimized')
     parser.add_argument('--attendees', '-a',
                         help='Path to attendee list file (optional)',
                         default=None)
@@ -108,7 +107,7 @@ def main():
             results = asyncio.run(process_videos(
                 directory=str(video_dir),
                 attendee_list=args.attendees,
-                project_gallery_url=args.url
+                # project_gallery_url=args.url
             ))
         finally:
             # Cancel the alarm
