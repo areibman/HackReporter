@@ -1,20 +1,11 @@
 # Core dependencies
-fastmcp>=2.10.5
-crewai>=0.98.0
-crewai-tools>=0.17.0
-agentops
-
-# Environment and utilities
+litellm>=1.0.0
+google-genai>=1.0.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 
-# AI/ML APIs
-google-genai>=1.0.0
-langchain-google-genai>=2.0.0
+# Optional: For OpenAI models
+openai>=1.0.0
 
-# Social Media APIs
-exa-py>=1.14.0
-
-# Optional: Alternative LLM providers
-# openai>=1.0.0
-# anthropic>=0.0.0 
+# Optional: For Anthropic models  
+anthropic>=0.0.0
