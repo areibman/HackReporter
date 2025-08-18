@@ -1,7 +1,8 @@
 # Core dependencies
 fastmcp>=2.10.5
-crewai>=0.98.0
-crewai-tools>=0.17.0
+# Removed CrewAI dependencies
+# crewai>=0.98.0
+# crewai-tools>=0.17.0
 agentops
 
 # Environment and utilities
@@ -11,6 +12,7 @@ requests>=2.31.0
 # AI/ML APIs
 google-genai>=1.0.0
 langchain-google-genai>=2.0.0
+litellm>=1.35.0
 
 # Social Media APIs
 exa-py>=1.14.0

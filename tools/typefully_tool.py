@@ -3,7 +3,7 @@
 import os
 import requests
 from typing import Dict, List, Optional
-from crewai.tools import BaseTool
+from .base_tool import BaseTool
 from pydantic import BaseModel, Field
 
 

@@ -11,8 +11,7 @@ dependencies = [
     "tweepy>=4.14.0",
     "langchain-google-genai>=2.0.0",
     "agentops>=0.4.17",
-    "crewai>=0.141.0",
-    "crewai-tools>=0.51.1",
     "exa-py>=1.14.16",
     "stagehand-py>=0.3.10",
+    "litellm>=1.35.0",
 ]
