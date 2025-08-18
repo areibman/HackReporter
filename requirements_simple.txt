@@ -1,0 +1,10 @@
+# Core dependencies for simple video processor
+litellm>=1.0.0
+google-genai>=1.0.0
+requests>=2.31.0
+
+# Environment and utilities
+python-dotenv>=1.0.0
+
+# Optional: OpenAI for better text generation (fallback to Gemini if not available)
+# openai>=1.0.0
