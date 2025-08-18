@@ -3,7 +3,12 @@
 import os
 import requests
 from typing import Dict, List, Optional
-from crewai.tools import BaseTool
+try:
+    from crewai.tools import BaseTool  # type: ignore
+except Exception:
+    # Fallback to a plain object to avoid CrewAI dependency
+    class BaseTool:  # type: ignore
+        pass
 from pydantic import BaseModel, Field
 
 
