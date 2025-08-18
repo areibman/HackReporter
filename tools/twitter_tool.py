@@ -1,4 +1,4 @@
-from crewai.tools import BaseTool
+from .base_tool import BaseTool
 from typing import Type, Any, List, Dict, Optional
 from pydantic import BaseModel, Field
 from openai import OpenAI
