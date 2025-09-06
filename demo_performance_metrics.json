@@ -1,0 +1,55 @@
+{
+  "start_time": 1757141803.9919198,
+  "monitoring_interval": 1.0,
+  "metrics": [
+    {
+      "timestamp": "2025-09-06T06:56:43.994362",
+      "cpu_percent": 0.0,
+      "memory_mb": 811.32421875,
+      "memory_percent": 7.2,
+      "disk_io_read_mb": 0.0,
+      "disk_io_write_mb": 0.0,
+      "network_sent_mb": 0.0,
+      "network_recv_mb": 0.0,
+      "process_count": 25,
+      "load_avg": 0.0693359375
+    },
+    {
+      "timestamp": "2025-09-06T06:56:44.994930",
+      "cpu_percent": 1.5,
+      "memory_mb": 813.69921875,
+      "memory_percent": 7.2,
+      "disk_io_read_mb": 0.0,
+      "disk_io_write_mb": 0.0859375,
+      "network_sent_mb": 0.0,
+      "network_recv_mb": 0.0,
+      "process_count": 25,
+      "load_avg": 0.0693359375
+    }
+  ],
+  "summary": {
+    "monitoring_duration_minutes": 0.03,
+    "samples_collected": 2,
+    "cpu_usage": {
+      "average": 0.8,
+      "peak": 1.5,
+      "minimum": 0.0
+    },
+    "memory_usage": {
+      "average_percent": 7.2,
+      "peak_percent": 7.2,
+      "current_mb": 813.7
+    },
+    "disk_io": {
+      "total_read_mb": 0.0,
+      "total_write_mb": 0.1
+    },
+    "network_io": {
+      "total_sent_mb": 0.0,
+      "total_received_mb": 0.0
+    },
+    "recommendations": [
+      "Low CPU usage. You could potentially increase concurrent processing."
+    ]
+  }
+}

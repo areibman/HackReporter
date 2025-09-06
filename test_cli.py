@@ -5,24 +5,37 @@ CLI tool for testing HackReporter video processing
 import argparse
 import sys
 from pathlib import Path
-from crew import process_videos
 import os
-from dotenv import load_dotenv
-import agentops
 import asyncio
 
-# Load environment variables
-load_dotenv()
+# Lazy imports for faster startup
+def _lazy_imports():
+    """Import heavy dependencies only when needed"""
+    global process_videos, load_dotenv, agentops
+    
+    from crew import process_videos
+    from dotenv import load_dotenv
+    import agentops
+    
+    return load_dotenv, agentops
 
-# Initialize AgentOps with auto_start_session=False
-AGENTOPS_API_KEY = os.getenv("AGENTOPS_API_KEY", "YOUR_API_KEY")
-agentops.init(api_key=AGENTOPS_API_KEY,
-              auto_start_session=False,
-              tags=["hackathon", "video-processing", "cli"])
-# weave.init('HackReporter')
+# Initialize heavy imports only when needed
+load_dotenv = None
+agentops = None
+process_videos = None
 
 
 def main():
+    # Initialize heavy imports now that we need them
+    load_dotenv_fn, agentops_module = _lazy_imports()
+    load_dotenv_fn()
+    
+    # Initialize AgentOps with auto_start_session=False
+    AGENTOPS_API_KEY = os.getenv("AGENTOPS_API_KEY", "YOUR_API_KEY")
+    agentops_module.init(api_key=AGENTOPS_API_KEY,
+                        auto_start_session=False,
+                        tags=["hackathon", "video-processing", "cli"])
+    
     parser = argparse.ArgumentParser(description='Process hackathon videos and generate tweet threads')
     parser.add_argument('directory',
                         help='Directory containing video files to process',
@@ -88,7 +101,7 @@ def main():
     # Start AgentOps trace
     tracer = None
     try:
-        tracer = agentops.start_trace(
+        tracer = agentops_module.start_trace(
             trace_name=f"CLI HackReporter - {video_dir.name}",
             tags=["cli", "video-processing", str(video_dir)]
         )
@@ -121,7 +134,7 @@ def main():
         if "error" in results:
             print(f"❌ Error: {results['error']}")
             if tracer:
-                agentops.end_trace(tracer, end_state="Fail")
+                agentops_module.end_trace(tracer, end_state="Fail")
         else:
             print(f"📊 Processed {results['processed_videos']} videos")
             print(f"\n📝 Output saved to: output/tweet_thread.md")
@@ -139,12 +152,12 @@ def main():
                 print(preview)
 
             if tracer:
-                agentops.end_trace(tracer, end_state="Success")
+                agentops_module.end_trace(tracer, end_state="Success")
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Processing interrupted by user")
         if tracer:
-            agentops.end_trace(tracer, end_state="Cancelled")
+            agentops_module.end_trace(tracer, end_state="Cancelled")
         sys.exit(1)
     except TimeoutError as e:
         print(f"\n⏱️  {str(e)}")
@@ -152,16 +165,16 @@ def main():
         print("- The agent is not iterating through all videos properly")
         print("- There's an issue with context passing between tasks")
         if tracer:
-            agentops.end_trace(tracer, end_state="Timeout")
+            agentops_module.end_trace(tracer, end_state="Timeout")
         sys.exit(1)
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
         if tracer:
-            agentops.end_trace(tracer, end_state="Fail")
+            agentops_module.end_trace(tracer, end_state="Fail")
         sys.exit(1)
     finally:
         # Ensure AgentOps is properly shut down
-        agentops.end_all_sessions()
+        agentops_module.end_all_sessions()
 
 
 if __name__ == "__main__":
