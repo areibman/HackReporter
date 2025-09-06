@@ -33,6 +33,7 @@ AGENTOPS_API_KEY=your_agentops_api_key  # Get from https://www.agentops.ai/
 
 # LLM and API Keys
 GOOGLE_API_KEY=your_google_api_key
+OPENAI_API_KEY=your_openai_api_key
 EXA_API_KEY=your_exa_api_key  # Get from https://exa.ai/
 CAPTIONS_AI_API_KEY=your_captions_key
 
