@@ -1,7 +1,6 @@
 from crewai.tools import BaseTool
 from typing import Type, Any, List, Dict, Optional
 from pydantic import BaseModel, Field
-from openai import OpenAI
 import os
 import logging
 
@@ -72,6 +71,13 @@ class TwitterSearchTool(BaseTool):
                 return "Error: EXA_API_KEY environment variable not set"
 
             logger.debug("Initializing OpenAI client with Exa API")
+            # Lazy import OpenAI SDK only when needed
+            try:
+                from openai import OpenAI  # type: ignore
+            except Exception as import_error:
+                logger.error(f"openai package not available: {import_error}")
+                return f"Error: openai package not available ({import_error})"
+
             # Initialize OpenAI client with Exa's base URL
             client = OpenAI(
                 base_url="https://api.exa.ai",

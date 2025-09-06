@@ -5,14 +5,26 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastmcp>=2.10.5",
-    "python-dotenv>=1.0.0",
-    "google-genai>=1.0.0",
-    "tweepy>=4.14.0",
-    "langchain-google-genai>=2.0.0",
-    "agentops>=0.4.17",
     "crewai>=0.141.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+    "google-genai>=1.0.0",
+]
+
+[project.optional-dependencies]
+monitor = [
+    "agentops>=0.4.17",
+]
+stagehand = [
     "crewai-tools>=0.51.1",
-    "exa-py>=1.14.16",
     "stagehand-py>=0.3.10",
+]
+twitter = [
+    "openai>=1.0.0",
+]
+mcp = [
+    "fastmcp>=2.10.5",
+]
+all = [
+    "hackreporter[monitor,stagehand,twitter,mcp]",
 ]

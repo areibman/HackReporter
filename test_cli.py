@@ -8,18 +8,12 @@ from pathlib import Path
 from crew import process_videos
 import os
 from dotenv import load_dotenv
-import agentops
 import asyncio
 
 # Load environment variables
 load_dotenv()
 
-# Initialize AgentOps with auto_start_session=False
-AGENTOPS_API_KEY = os.getenv("AGENTOPS_API_KEY", "YOUR_API_KEY")
-agentops.init(api_key=AGENTOPS_API_KEY,
-              auto_start_session=False,
-              tags=["hackathon", "video-processing", "cli"])
-# weave.init('HackReporter')
+# AgentOps is imported and initialized lazily in main() if an API key is present
 
 
 def main():
@@ -85,13 +79,23 @@ def main():
     print("Starting HackReporter crew...")
     print("="*50 + "\n")
 
-    # Start AgentOps trace
+    # Start AgentOps trace (lazy import and init)
     tracer = None
+    agentops = None
     try:
-        tracer = agentops.start_trace(
-            trace_name=f"CLI HackReporter - {video_dir.name}",
-            tags=["cli", "video-processing", str(video_dir)]
-        )
+        AGENTOPS_API_KEY = os.getenv("AGENTOPS_API_KEY")
+        if AGENTOPS_API_KEY:
+            try:
+                import agentops  # type: ignore
+                agentops.init(api_key=AGENTOPS_API_KEY,
+                              auto_start_session=False,
+                              tags=["hackathon", "video-processing", "cli"])
+                tracer = agentops.start_trace(
+                    trace_name=f"CLI HackReporter - {video_dir.name}",
+                    tags=["cli", "video-processing", str(video_dir)]
+                )
+            except Exception:
+                agentops = None
 
         # Process videos with a timeout
         import signal
@@ -120,7 +124,7 @@ def main():
 
         if "error" in results:
             print(f"❌ Error: {results['error']}")
-            if tracer:
+            if tracer and agentops:
                 agentops.end_trace(tracer, end_state="Fail")
         else:
             print(f"📊 Processed {results['processed_videos']} videos")
@@ -138,12 +142,12 @@ def main():
                     preview += "\n... (truncated)"
                 print(preview)
 
-            if tracer:
+            if tracer and agentops:
                 agentops.end_trace(tracer, end_state="Success")
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Processing interrupted by user")
-        if tracer:
+        if tracer and agentops:
             agentops.end_trace(tracer, end_state="Cancelled")
         sys.exit(1)
     except TimeoutError as e:
@@ -151,17 +155,18 @@ def main():
         print("The crew is taking too long. This often happens when:")
         print("- The agent is not iterating through all videos properly")
         print("- There's an issue with context passing between tasks")
-        if tracer:
+        if tracer and agentops:
             agentops.end_trace(tracer, end_state="Timeout")
         sys.exit(1)
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
-        if tracer:
+        if tracer and agentops:
             agentops.end_trace(tracer, end_state="Fail")
         sys.exit(1)
     finally:
         # Ensure AgentOps is properly shut down
-        agentops.end_all_sessions()
+        if agentops:
+            agentops.end_all_sessions()
 
 
 if __name__ == "__main__":

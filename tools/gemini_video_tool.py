@@ -1,7 +1,6 @@
 from crewai.tools import BaseTool
 from typing import Type, Any, Optional, Dict
 from pydantic import BaseModel, Field
-from google import genai
 import os
 import time
 from pathlib import Path
@@ -70,6 +69,12 @@ class GeminiVideoTool(BaseTool):
             api_key = os.getenv("GOOGLE_API_KEY")
             if not api_key:
                 return "Error: GOOGLE_API_KEY environment variable not set"
+
+            # Lazy import of Google GenAI SDK
+            try:
+                from google import genai  # type: ignore
+            except Exception as import_error:
+                return f"Error: google-genai package not available ({import_error})"
 
             # Create client
             client = genai.Client(api_key=api_key)

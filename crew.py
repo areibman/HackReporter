@@ -6,10 +6,8 @@ from pathlib import Path
 import json
 import asyncio
 
-from tools import GeminiVideoTool, TwitterSearchTool, TypefullyTool
-from crewai_tools import StagehandTool
 import os
-from stagehand.schemas import AvailableModel
+import tools as tools_pkg
 
 
 @CrewBase
@@ -24,23 +22,32 @@ class HackReporterCrew():
     def video_summarizer(self) -> Agent:
         return Agent(
             config=self.agents_config['video_summarizer'],  # type: ignore[index]
-            tools=[GeminiVideoTool()],
+            tools=[tools_pkg.GeminiVideoTool()],
             verbose=True
         )
 
     @agent
     def person_finder(self) -> Agent:
-        return Agent(
-            config=self.agents_config['person_finder'],  # type: ignore[index]
-            tools=[
+        # Lazily import optional Stagehand dependencies
+        tools_list = []
+        try:
+            from crewai_tools import StagehandTool  # type: ignore
+            from stagehand.schemas import AvailableModel  # type: ignore
+            tools_list.append(
                 StagehandTool(
                     api_key=os.environ["BROWSERBASE_API_KEY"],
                     project_id=os.environ["BROWSERBASE_PROJECT_ID"],
                     model_api_key=os.environ["OPENAI_API_KEY"],
                     model_name=AvailableModel.GPT_4O,
-                ),
-                # TwitterSearchTool()
-            ],
+                )
+            )
+        except Exception:
+            # Optional dependency not installed or missing env vars; continue without it
+            pass
+
+        return Agent(
+            config=self.agents_config['person_finder'],  # type: ignore[index]
+            tools=tools_list,
             verbose=True
         )
 
@@ -48,7 +55,7 @@ class HackReporterCrew():
     def thread_composer(self) -> Agent:
         return Agent(
             config=self.agents_config['thread_composer'],  # type: ignore[index]
-            tools=[TypefullyTool()],
+            tools=[tools_pkg.TypefullyTool()],
             verbose=True
         )
 
