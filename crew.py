@@ -37,7 +37,7 @@ class HackReporterCrew():
                     api_key=os.environ["BROWSERBASE_API_KEY"],
                     project_id=os.environ["BROWSERBASE_PROJECT_ID"],
                     model_api_key=os.environ["OPENAI_API_KEY"],
-                    model_name=AvailableModel.GPT_4O,
+                    model_name="gpt-5",
                 ),
                 # TwitterSearchTool()
             ],
