@@ -1,10 +1,16 @@
 from crewai.tools import BaseTool
 from typing import Type, Any, Optional, Dict
 from pydantic import BaseModel, Field
-from google import genai
 import os
 import time
 from pathlib import Path
+from functools import lru_cache
+import asyncio
+
+# Lazy import for performance
+def _get_genai():
+    from google import genai
+    return genai
 
 
 class GeminiVideoToolInput(BaseModel):
@@ -66,16 +72,24 @@ class GeminiVideoTool(BaseTool):
             Analysis results as a string
         """
         try:
-            # Configure Gemini API
+            # Configure Gemini API with lazy loading
             api_key = os.getenv("GOOGLE_API_KEY")
             if not api_key:
                 return "Error: GOOGLE_API_KEY environment variable not set"
 
-            # Create client
+            # Lazy load genai and create client
+            genai = _get_genai()
             client = genai.Client(api_key=api_key)
 
-            # Get file size for metadata
-            file_size = os.path.getsize(video_path) / (1024 * 1024)  # Size in MB
+            # Get file size for metadata with caching
+            file_size = self._get_file_size(video_path)
+
+            # Check if we have cached results for this video
+            cache_key = f"{video_path}_{file_size}_{hash(str(prompt))}"
+            cached_result = self._get_cached_result(cache_key)
+            if cached_result:
+                print(f"📋 Using cached result for {Path(video_path).name}")
+                return cached_result
 
             # Prepare the analysis prompt
             if transcribe:
@@ -148,10 +162,42 @@ class GeminiVideoTool(BaseTool):
             if start_time or end_time:
                 result += f"Clip: {start_time or '00:00'} - {end_time or 'end'}\n"
 
+            # Cache the result for future use
+            self._cache_result(cache_key, result)
+
             return result
 
         except Exception as e:
             return f"Error analyzing video: {str(e)}"
+
+    @lru_cache(maxsize=128)
+    def _get_file_size(self, video_path: str) -> float:
+        """Get file size in MB with caching."""
+        return os.path.getsize(video_path) / (1024 * 1024)
+    
+    def _get_cached_result(self, cache_key: str) -> Optional[str]:
+        """Get cached analysis result if available."""
+        cache_dir = Path(".cache/video_analysis")
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file = cache_dir / f"{hash(cache_key)}.txt"
+        
+        if cache_file.exists():
+            try:
+                return cache_file.read_text(encoding='utf-8')
+            except Exception:
+                pass
+        return None
+    
+    def _cache_result(self, cache_key: str, result: str) -> None:
+        """Cache analysis result for future use."""
+        cache_dir = Path(".cache/video_analysis")
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file = cache_dir / f"{hash(cache_key)}.txt"
+        
+        try:
+            cache_file.write_text(result, encoding='utf-8')
+        except Exception:
+            pass  # Ignore cache write failures
 
     def _get_mime_type(self, video_path: str) -> str:
         """Determine MIME type from file extension."""

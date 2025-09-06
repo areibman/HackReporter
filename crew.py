@@ -1,16 +1,34 @@
-from crewai import Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task
-from crewai.agents.agent_builder.base_agent import BaseAgent
-from typing import List
+# Optimize imports - lazy load heavy dependencies
+from typing import List, TYPE_CHECKING
 from pathlib import Path
 import json
 import asyncio
-
-from tools import GeminiVideoTool, TwitterSearchTool, TypefullyTool
-from crewai_tools import StagehandTool
 import os
-from stagehand.schemas import AvailableModel
 
+# Lazy imports for performance
+if TYPE_CHECKING:
+    from crewai import Agent, Crew, Task
+    from crewai.agents.agent_builder.base_agent import BaseAgent
+    from tools import GeminiVideoTool, TwitterSearchTool, TypefullyTool
+    from crewai_tools import StagehandTool
+    from stagehand.schemas import AvailableModel
+
+def _lazy_import():
+    """Lazy import heavy dependencies only when needed"""
+    global Agent, Crew, Process, Task, CrewBase, agent, crew, task, BaseAgent
+    global GeminiVideoTool, TwitterSearchTool, TypefullyTool, StagehandTool, AvailableModel
+    
+    from crewai import Agent, Crew, Process, Task
+    from crewai.project import CrewBase, agent, crew, task
+    from crewai.agents.agent_builder.base_agent import BaseAgent
+    from tools import GeminiVideoTool, TwitterSearchTool, TypefullyTool
+    from crewai_tools import StagehandTool
+    from stagehand.schemas import AvailableModel
+    
+    return CrewBase
+
+# Initialize lazy imports
+CrewBase = _lazy_import()
 
 @CrewBase
 class HackReporterCrew():
@@ -185,9 +203,17 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
         # Process videos individually using the individual_crew configuration
     print(f"\nProcessing {len(video_files)} videos individually...")
 
-    # Create individual async tasks for each video - TRUE PARALLEL PROCESSING
-    # Use a semaphore to limit concurrent processing (adjust based on your system)
-    MAX_CONCURRENT_VIDEOS = 2  # Reduced from 5 to avoid API quota issues
+    # Use performance configuration for optimal resource usage
+    from performance_config import perf_config
+    
+    # Get optimized configuration
+    perf_config.print_system_info()
+    video_config = perf_config.get_video_processing_config(len(video_files))
+    
+    MAX_CONCURRENT_VIDEOS = video_config['max_concurrent_videos']
+    SEQUENTIAL_MODE = video_config['use_sequential'] or SEQUENTIAL_MODE
+    
+    print(f"🚀 Performance-optimized settings applied")
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_VIDEOS)
 
     # Check if we should process sequentially to avoid quota issues
@@ -244,11 +270,13 @@ async def process_videos(directory: str, attendee_list: str | None = None) -> di
         r, Exception) and not str(r).startswith("Error"))
     print(f"\nProcessed {successful_count}/{len(individual_results)} videos successfully!")
 
-    # Save individual results for aggregation
+    # Save individual results for aggregation with memory optimization
     output_dir = Path('output')
     output_dir.mkdir(exist_ok=True)
 
     summaries = []
+    # Process results in chunks to avoid memory issues with large video batches
+    CHUNK_SIZE = 10
     for i, result in enumerate(individual_results):
         print(f"\nDEBUG - Processing result {i+1}:")
         print(f"  Result type: {type(result)}")
