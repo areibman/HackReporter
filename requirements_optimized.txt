@@ -1,0 +1,28 @@
+# Core dependencies - pinned versions for consistency
+fastmcp==2.10.5
+crewai==0.141.0
+crewai-tools==0.51.1
+agentops==0.4.17
+
+# Environment and utilities
+python-dotenv==1.0.0
+requests==2.31.0
+
+# AI/ML APIs - only what's needed
+google-genai==1.0.0
+langchain-google-genai==2.0.0
+
+# Social Media APIs
+exa-py==1.14.16
+
+# Performance optimization
+aiofiles==24.1.0  # For async file operations
+asyncio-throttle==1.0.2  # For rate limiting
+cachetools==5.3.2  # For caching
+memory-profiler==0.61.0  # For memory profiling
+
+# Optional: Alternative LLM providers (commented out to reduce dependencies)
+# openai>=1.0.0
+# anthropic>=0.0.0
+# tweepy>=4.14.0  # Only if Twitter integration is needed
+# stagehand-py>=0.3.10  # Only if browser automation is needed
